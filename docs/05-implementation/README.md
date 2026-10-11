@@ -31,7 +31,7 @@
 | Apple Developer Program | ✅ 가입 |
 | Firebase 프로젝트 | ☐ |
 | 공공데이터포털 API 신청 | ☐ |
-| GitHub 공개 저장소 | ☐ |
+| GitHub 공개 저장소 | ✅ [kut7728/D-Flight](https://github.com/kut7728/D-Flight) |
 
 ## 진행 규칙
 

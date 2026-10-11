@@ -45,5 +45,6 @@
 
 | 작업 | 상태 |
 |---|---|
-| 공개 저장소 생성 (이름은 M0에서 결정) | ☐ |
-| 첫 푸시 전 비밀 정보 검사 | ☐ |
+| 공개 저장소 생성: [kut7728/D-Flight](https://github.com/kut7728/D-Flight) | ✅ 2026-10-12 |
+| 첫 푸시 전 비밀 정보 검사 | ✅ |
+| 비공개 취약점 신고(Private vulnerability reporting) 켜기 | ✅ |
