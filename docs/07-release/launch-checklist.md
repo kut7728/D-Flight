@@ -3,7 +3,7 @@
 ## 1. 출시 전
 
 ### 서비스·운영
-- [ ] 운영 Firebase 프로젝트 생성 (도쿄, Blaze, 예산 알림)
+- [ ] 운영 Firebase 프로젝트 생성 (서울 `asia-northeast3`, Blaze, 예산 알림)
 - [ ] 운영 Security Rules·인덱스·서버 함수 배포
 - [ ] 운영 Secret Manager에 공공 API 운영 키 등록
 - [ ] **인천공항 API 운영 한도 신청·승인** (서비스 주소: 지원 페이지)

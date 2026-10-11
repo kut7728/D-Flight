@@ -3,7 +3,7 @@
 ## 1. 공통
 
 - 모두 Firebase **호출형 함수**(callable)다. 앱은 Firebase Functions SDK로 호출한다.
-- 지역: `asia-northeast1`
+- 지역: `asia-northeast3` (서울)
 - **로그인 필수**, **App Check 필수**. 둘 중 하나라도 없으면 거부한다.
 - 입력은 서버에서 다시 검증한다. 앱의 검증은 사용자 편의용이다.
 

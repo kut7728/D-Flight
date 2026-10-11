@@ -20,7 +20,7 @@
 ## 확정된 핵심 범위
 
 - iOS 18 이상, SwiftUI + `@Observable` MVVM + Repository. 외부 라이브러리는 Firebase SDK와 GoogleSignIn만 쓴다.
-- 서버: Firebase(도쿄 `asia-northeast1`), Cloud Functions 2세대 TypeScript, Node.js 22.
+- 서버: Firebase(서울 `asia-northeast3`), Cloud Functions 2세대 TypeScript, Node.js 22.
 - 앱은 Firestore를 **읽기만** 한다. 모든 쓰기는 서버 함수를 거친다.
 - 항공 데이터는 **한국 공공 API**(인천공항, 한국공항공사)만 서버에서 호출한다. 그 밖의 공항 정보는 사용자 제보로 채운다.
 - 로그인: Sign in with Apple + Google, 첫 실행 시 필수. 앱 안 계정 삭제를 제공하고, 삭제 시 Apple 토큰을 해지한다.

@@ -24,7 +24,7 @@
 | TD-01 | 앱·서버 코드를 **새로 작성**한다. 기존 코드는 참고만 한다. |
 | TD-02 | 앱: **SwiftUI + @Observable MVVM** + Repository |
 | TD-03 | 읽기는 앱이 Firestore 직접 구독, **쓰기는 모두 서버 함수 경유** |
-| TD-04 | Firebase 지역 **도쿄 asia-northeast1** (Firestore 지역은 변경 불가) |
+| TD-04 | Firebase 지역 **서울 asia-northeast3** (Firestore 지역은 변경 불가). 2026-10-12 도쿄에서 변경: 한국 공공 API와 가까움. Cloud Functions 가격 등급은 Tier 2(도쿄보다 약간 비쌈) |
 | TD-05 | 서버: **TypeScript**, Cloud Functions 2세대, Node.js 22 |
 | TD-06 | 공공 API 조회: 등록 1회, D-3 전 하루 1회, D-3부터 1시간마다, **출발 6시간 전부터 15분마다** |
 | TD-07 | 지난 항공편은 **사용자가 지울 때까지** 보관 |

@@ -19,7 +19,7 @@
 | 작업 | 상태 |
 |---|---|
 | 개발 프로젝트 생성 | ☐ |
-| Firestore 생성: **지역 `asia-northeast1` (도쿄)** — 변경 불가 | ☐ |
+| Firestore 생성: **지역 `asia-northeast3` (서울)** — 변경 불가 | ☐ |
 | Blaze 요금제 전환 (Functions·Secret Manager에 필요) | ☐ |
 | 예산 알림 설정 (예: 월 500엔, 1,000엔에서 메일) | ☐ |
 | Authentication: Apple, Google 로그인 사용 설정 | ☐ (M3) |

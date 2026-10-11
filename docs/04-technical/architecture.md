@@ -12,7 +12,7 @@
 │   └─ App Group 공유 저장소에서 읽기           │
 └───────────────┬─────────────────────────┘
                 │ Firebase Auth 토큰 + App Check
-┌───────────────▼──── Firebase (도쿄 asia-northeast1) ──┐
+┌───────────────▼──── Firebase (서울 asia-northeast3) ──┐
 │  Cloud Functions (TypeScript)                        │
 │   ├─ 호출형 함수: 검색, 등록, 제보, 설정, 계정 삭제         │
 │   └─ 예약 함수: 15분마다 항공편 갱신, 매일 정리            │
