@@ -1,0 +1,490 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>D-Flight 시각 디자인 미리보기</title>
+<style>
+  :root {
+    --navy: #0B2545;
+    --accent: #1E4B8F;
+    --bg: #F2F2F7;
+    --surface: #FFFFFF;
+    --label: #000000;
+    --secondary: #6B7280;
+    --separator: #E5E5EA;
+    --delay: #B45309;
+    --cancel: #B91C1C;
+    /* 탑승권·요약 카드: 라이트 = 화이트, 다크 = 네이비 */
+    --card: #FFFFFF;
+    --card-fg: #0B2545;
+    --card-fg2: #6B7280;
+    --card-delay: #B45309;
+    --card-cancel: #B91C1C;
+    --card-line: rgba(11,37,69,.22);
+    --card-border: transparent;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Hiragino Sans", "Apple SD Gothic Neo", sans-serif;
+  }
+  .dark {
+    --navy: #14305A;
+    --accent: #8AB8FF;
+    --bg: #000000;
+    --surface: #1C1C1E;
+    --label: #FFFFFF;
+    --secondary: #98989F;
+    --separator: #38383A;
+    --delay: #FBBF24;
+    --cancel: #F87171;
+    --card: #14305A;
+    --card-fg: #FFFFFF;
+    --card-fg2: rgba(255,255,255,.72);
+    --card-delay: #FCD34D;
+    --card-cancel: #FCA5A5;
+    --card-line: rgba(255,255,255,.35);
+    --card-border: transparent;
+  }
+  body { margin: 0; background: #D9DCE3; color: #111; }
+  header { padding: 24px 32px 8px; }
+  header h1 { margin: 0 0 4px; font-size: 22px; }
+  header p { margin: 0; color: #444; font-size: 14px; }
+  section { padding: 16px 32px 8px; }
+  section > h2 { font-size: 16px; margin: 8px 0 12px; color: #333; }
+  .row { display: flex; flex-wrap: wrap; gap: 28px; align-items: flex-start; }
+  .caption { font-size: 12px; color: #555; margin-top: 18px; text-align: center; }
+  .num { font-variant-numeric: tabular-nums; }
+
+  /* phone frame */
+  .phone { width: 390px; height: 844px; border-radius: 48px; background: var(--bg); color: var(--label);
+           overflow: hidden; position: relative; box-shadow: 0 0 0 10px #111, 0 20px 40px rgba(0,0,0,.25); }
+  .status { height: 54px; display: flex; justify-content: space-between; align-items: center; padding: 0 32px; font-weight: 600; font-size: 16px; }
+  .island { position: absolute; top: 11px; left: 50%; transform: translateX(-50%); width: 124px; height: 36px; background: #000; border-radius: 20px; }
+  .nav { display: flex; justify-content: space-between; align-items: flex-end; padding: 4px 16px 8px; }
+  .nav h3 { margin: 0; font-size: 34px; font-weight: 700; }
+  .plus { width: 36px; height: 36px; border-radius: 18px; background: var(--surface); color: var(--accent);
+          display: grid; place-items: center; font-size: 24px; font-weight: 500; }
+  .content { padding: 0 16px; }
+  .chip { display: inline-block; height: 22px; line-height: 22px; padding: 0 8px; border-radius: 11px; font-size: 12px; font-weight: 600; }
+  .chip.sample { background: var(--separator); color: var(--secondary); }
+  .chip.user { border: 1px solid var(--secondary); color: var(--secondary); line-height: 20px; }
+  .chip.changed { background: color-mix(in srgb, var(--delay) 18%, transparent); color: var(--delay); }
+  .tabbar { position: absolute; bottom: 24px; left: 16px; right: 16px; height: 62px; border-radius: 31px;
+            background: color-mix(in srgb, var(--surface) 78%, transparent); backdrop-filter: blur(20px);
+            box-shadow: 0 2px 12px rgba(0,0,0,.12); display: flex; justify-content: space-around; align-items: center; font-size: 11px; color: var(--secondary); }
+  .tabbar div { text-align: center; } .tabbar .on { color: var(--accent); font-weight: 600; }
+  .tabbar i { display: block; font-style: normal; font-size: 20px; margin-bottom: 2px; }
+
+  /* boarding pass */
+  .pass { background: var(--card); color: var(--card-fg); border-radius: 20px; position: relative; margin: 8px 0 24px; border: 1px solid var(--card-border); overflow: hidden; }
+  .pass .top { padding: 18px 20px 16px; }
+  .pass .line1 { display: flex; justify-content: space-between; align-items: center; font-weight: 700; }
+  .pass .dday { font-size: 17px; }
+  .pass .delay { color: var(--card-delay); font-size: 15px; }
+  .pass .sub { color: var(--card-fg2); font-size: 13px; margin-top: 4px; }
+  .pass .route { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 10px; margin-top: 16px; }
+  .pass .code { font-size: 34px; font-weight: 700; letter-spacing: .5px; }
+  .pass .path { border-top: 2px dashed var(--card-line); position: relative; height: 0; }
+  .pass .path span { position: absolute; left: 50%; top: -13px; transform: translateX(-50%); background: var(--card); padding: 0 6px; font-size: 18px; }
+  .pass .names { display: grid; grid-template-columns: 1fr 1fr; margin-top: 4px; font-size: 13px; color: var(--card-fg2); }
+  .pass .names div:last-child { text-align: right; }
+  .pass .times { display: grid; grid-template-columns: 1fr 1fr; margin-top: 2px; font-size: 15px; font-weight: 600; }
+  .pass .times div:last-child { text-align: right; }
+  .pass .times .changed { color: var(--card-delay); }
+  .pass .perf { position: relative; height: 0; border-top: 2px dashed var(--card-line); margin: 0 18px; }
+  .pass .perf::before, .pass .perf::after { content: ""; position: absolute; top: -13px; width: 24px; height: 24px; border-radius: 12px; background: var(--bg); border: 1px solid var(--card-border); box-sizing: border-box; }
+  .pass .perf::before { left: -30px; } .pass .perf::after { right: -30px; }
+  .pass .stub { display: grid; grid-template-columns: repeat(3, 1fr); padding: 14px 20px 18px; }
+  .pass .stub small { display: block; color: var(--card-fg2); font-size: 12px; margin-bottom: 2px; }
+  .pass .stub b { font-size: 22px; } .pass .stub b.muted { color: var(--card-fg2); font-size: 17px; }
+  .pass .stub .est { font-size: 11px; color: var(--card-fg2); font-weight: 500; }
+
+  .sectionTitle { font-size: 13px; color: var(--secondary); margin: 0 4px 6px; text-transform: none; }
+  .list { background: var(--surface); border-radius: 12px; overflow: hidden; }
+  .list .item { display: grid; grid-template-columns: 52px 1fr auto; align-items: center; gap: 8px; padding: 12px 16px; border-bottom: 1px solid var(--separator); }
+  .list .item:last-child { border-bottom: 0; }
+  .list .d { font-weight: 700; color: var(--accent); }
+  .list .t { font-weight: 600; } .list .s { font-size: 13px; color: var(--secondary); }
+  .list .chev { color: var(--secondary); }
+
+  /* detail */
+  .back { color: var(--accent); font-size: 17px; padding: 6px 16px; display: flex; justify-content: space-between; }
+  .summary { background: var(--card); color: var(--card-fg); border: 1px solid var(--card-border); border-radius: 20px; padding: 14px 18px; margin: 4px 0 18px; }
+  .summary b { font-size: 17px; } .summary .delay { color: var(--card-delay); font-weight: 700; }
+  .summary .sub { color: var(--card-fg2); font-size: 13px; margin-top: 4px; }
+  .group { background: var(--surface); border-radius: 12px; margin-bottom: 18px; overflow: hidden; }
+  /* 출발·도착 머리 행: 일반 행보다 조금 높고 큰 글자로 위계 */
+  .group .head { height: 52px; box-sizing: border-box; padding: 0 16px; font-weight: 700; font-size: 18px;
+                 display: flex; justify-content: space-between; align-items: center; }
+  .group .head span { font-weight: 500; color: var(--secondary); font-size: 13px; }
+  /* 정보 행: 높이 고정. 값·변경 전 값은 오른쪽 끝, 칩·버튼은 값의 왼쪽 */
+  .kv { height: 48px; box-sizing: border-box; display: flex; justify-content: space-between; align-items: center;
+        padding: 0 16px; border-top: 1px solid var(--separator); }
+  .kv .k { font-size: 15px; color: var(--secondary); }
+  .kv .v { display: flex; align-items: center; gap: 8px; } .kv .v b { font-size: 20px; }
+  .kv .v .old { font-size: 13px; color: var(--secondary); text-decoration: line-through; }
+  .kv .v .chg { color: var(--delay); }
+  .kv .v .none { color: var(--secondary); font-size: 15px; }
+  .chip.action { background: color-mix(in srgb, var(--accent) 14%, transparent); color: var(--accent); }
+  .kv .chev { color: var(--secondary); font-size: 17px; }
+  .kv .lbl { font-size: 16px; color: var(--label); }
+  .seg { display: flex; background: var(--separator); border-radius: 9px; padding: 2px; width: 210px; }
+  .seg button { flex: 1; border: 0; background: transparent; border-radius: 7px; padding: 5px 0; font: inherit; font-size: 13px; color: var(--label); cursor: pointer; }
+  .seg button.on { background: var(--surface); box-shadow: 0 1px 3px rgba(0,0,0,.15); font-weight: 600; }
+  .dot { display: inline-grid; place-items: center; min-width: 20px; height: 20px; border-radius: 10px; background: #FF3B30; color: #fff; font-size: 12px; font-weight: 700; }
+  /* 화면 모드 전환 애니메이션 (실제 앱은 화면 전체 크로스페이드) */
+  .anim, .anim * { transition: background-color .45s ease, color .45s ease, border-color .45s ease, box-shadow .45s ease; }
+  .overlay { position: absolute; inset: 0; background: rgba(0,0,0,.35); display: grid; place-items: center; }
+  .alert { width: 290px; background: var(--surface); border-radius: 18px; padding: 20px 18px 12px; text-align: center; }
+  .alert h4 { margin: 0 0 6px; font-size: 17px; } .alert p { margin: 0 0 14px; font-size: 14px; color: var(--secondary); line-height: 1.45; }
+  .alert .badge { display: inline-block; font-size: 11px; font-weight: 700; color: var(--delay); margin-bottom: 6px; }
+  .alert .btn { border-top: 1px solid var(--separator); padding-top: 12px; color: var(--accent); font-weight: 600; }
+  .force { position: absolute; inset: 54px 0 0; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0 32px; text-align: center; }
+  .force h4 { font-size: 22px; margin: 22px 0 8px; } .force p { color: var(--secondary); font-size: 15px; line-height: 1.5; margin: 0; }
+  .force .cta { position: absolute; bottom: 48px; left: 24px; right: 24px; background: var(--accent); color: #fff; border-radius: 14px; padding: 15px; font-weight: 600; }
+  .dark .force .cta { color: #0B2545; }
+  .btns { display: flex; gap: 8px; padding: 10px 16px 14px; }
+  .btns div { flex: 1; text-align: center; padding: 9px 0; border-radius: 12px; background: color-mix(in srgb, var(--accent) 14%, transparent); color: var(--accent); font-weight: 600; font-size: 14px; }
+
+  /* widgets & live activity */
+  .wall { width: 390px; padding: 24px 20px; border-radius: 32px; background: linear-gradient(160deg, #6B8DD6, #8E5FB0); display: flex; gap: 16px; flex-wrap: wrap; }
+  .w { background: #0B2545; color: #fff; border-radius: 22px; padding: 14px; box-sizing: border-box; }
+  .w.s { width: 158px; height: 158px; display: flex; flex-direction: column; justify-content: space-between; }
+  .w.m { width: 338px; height: 158px; display: grid; grid-template-columns: 1fr 1fr; }
+  .w .big { font-size: 30px; font-weight: 700; } .w .mid { font-size: 17px; font-weight: 700; }
+  .w .dim { color: rgba(255,255,255,.72); font-size: 13px; } .w .warn { color: #FCD34D; font-weight: 700; font-size: 13px; }
+  .lock { width: 390px; padding: 20px; border-radius: 32px; background: linear-gradient(170deg, #1d2b44, #3a2d4f); box-sizing: border-box; }
+  .lock .clock { text-align: center; color: #fff; font-size: 72px; font-weight: 600; margin: 8px 0 20px; }
+  .la { background: #0B2545; color: #fff; border-radius: 22px; padding: 14px 16px; }
+  .la .r1 { display: flex; justify-content: space-between; font-weight: 700; }
+  .la .r2 { color: rgba(255,255,255,.72); font-size: 14px; margin-top: 4px; }
+  .la .r3 { display: grid; grid-template-columns: 1fr 1fr; margin-top: 10px; }
+  .la .r3 small { display: block; color: rgba(255,255,255,.72); font-size: 12px; }
+  .la .r3 b { font-size: 22px; }
+  .di { display: flex; flex-direction: column; gap: 14px; align-items: center; }
+  .di .compact { width: 250px; height: 37px; background: #000; color: #fff; border-radius: 20px; display: flex; justify-content: space-between; align-items: center; padding: 0 14px; box-sizing: border-box; font-weight: 700; font-size: 14px; }
+  .di .compact .v { color: #8AB8FF; }
+  .di .expanded { width: 370px; background: #000; color: #fff; border-radius: 40px; padding: 18px 22px; box-sizing: border-box; }
+  .icon { overflow: hidden; width: 180px; height: 180px; border-radius: 40px; background: linear-gradient(145deg, #0B2545, #1E4B8F); display: grid; place-items: center; }
+  .icon.light { background: linear-gradient(145deg, #FBF7EF, #EFE6D4); }
+  .icon.sm { width: 60px; height: 60px; border-radius: 14px; }
+  .note { font-size: 13px; color: #333; max-width: 820px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<header>
+  <h1>D-Flight 시각 디자인 미리보기</h1>
+  <p>가상 데이터(<b>XX5701</b> 등)로 만든 시안입니다. 실제 앱은 SwiftUI 기본 요소로 구현하며, 탭 바 모양은 iOS 버전에 따라 달라집니다(iOS 26: Liquid Glass). 기준: <a href="../visual-design.md">visual-design.md</a></p>
+</header>
+
+<section>
+  <h2>S-03 내 항공편 — 라이트 / 다크</h2>
+  <div class="row">
+    <!-- light & dark generated by template below -->
+    <div id="home-light"></div>
+    <div id="home-dark"></div>
+  </div>
+</section>
+
+<section>
+  <h2>S-06 항공편 상세 — 라이트 / 다크</h2>
+  <div class="row">
+    <div id="detail-light"></div>
+    <div id="detail-dark"></div>
+  </div>
+</section>
+
+<section>
+  <h2>S-09 설정 — 화면 모드 전환 (눌러 보세요) · 중요 공지 팝업 · 강제 업데이트</h2>
+  <div class="row">
+    <div id="settings-demo"></div>
+    <div id="notice-demo"></div>
+    <div id="force-demo"></div>
+  </div>
+</section>
+
+<section>
+  <h2>위젯 · Live Activity · 다이내믹 아일랜드</h2>
+  <div class="row">
+    <div>
+      <div class="wall">
+        <div class="w s">
+          <div><div class="big num">D-3</div><div class="mid">HND→ICN</div></div>
+          <div><div class="dim">XX5701</div><div class="warn">지연 45분</div></div>
+        </div>
+        <div class="w s">
+          <div><div class="big num">D-20</div><div class="mid">ICN→NRT</div></div>
+          <div class="dim">XX712</div>
+        </div>
+        <div class="w m">
+          <div style="display:flex;flex-direction:column;justify-content:space-between">
+            <div><div class="big num">D-3</div><div class="mid">HND → ICN</div></div>
+            <div class="dim">XX5701 · 샘플 데이터</div>
+          </div>
+          <div style="display:flex;flex-direction:column;justify-content:space-between;text-align:right">
+            <div><div class="dim">11/1(토)</div><div class="mid num">10:45 <span class="warn">지연</span></div></div>
+            <div><div class="dim">터미널 · 게이트</div><div class="mid num">T3 · 미정</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="caption">홈 화면 위젯 (작은 · 중간)</div>
+    </div>
+
+    <div>
+      <div class="lock">
+        <div class="clock num">7:25</div>
+        <div class="la">
+          <div class="r1"><span>✈ XX5701 &nbsp;HND → ICN</span><span style="color:#FCD34D">지연</span></div>
+          <div class="r2 num">출발 10:45 (현지) · 3:20 남음</div>
+          <div class="r3"><div><small>터미널</small><b class="num">T3</b></div><div><small>게이트</small><b class="num">108</b></div></div>
+        </div>
+      </div>
+      <div class="caption">Live Activity — 잠금 화면 (출발 3시간 전 자동 시작)</div>
+    </div>
+
+    <div>
+      <div class="di">
+        <div class="compact"><span>✈</span><span class="v num">G108 · 1:20</span></div>
+        <div class="expanded">
+          <div class="r1" style="display:flex;justify-content:space-between;font-weight:700"><span>✈ XX5701 HND → ICN</span><span style="color:#FCD34D">지연</span></div>
+          <div style="color:rgba(255,255,255,.72);font-size:14px;margin-top:4px" class="num">출발 10:45 (현지) · 1:20 남음</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;margin-top:10px">
+            <div><small style="color:rgba(255,255,255,.72)">터미널</small><br><b style="font-size:22px" class="num">T3</b></div>
+            <div><small style="color:rgba(255,255,255,.72)">게이트</small><br><b style="font-size:22px;color:#8AB8FF" class="num">108</b></div>
+          </div>
+        </div>
+      </div>
+      <div class="caption">다이내믹 아일랜드 — 작게 / 펼침</div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>앱 아이콘 시안</h2>
+  <div class="row" style="align-items:flex-end">
+    <div>
+      <div class="icon" id="icon-big"></div>
+      <div class="caption">다크 · 180pt</div>
+    </div>
+    <div>
+      <div class="icon sm" id="icon-small"></div>
+      <div class="caption">다크 · 60pt</div>
+    </div>
+    <div>
+      <div class="icon light" id="icon-big-light"></div>
+      <div class="caption">라이트 · 180pt</div>
+    </div>
+    <div>
+      <div class="icon sm light" id="icon-small-light"></div>
+      <div class="caption">라이트 · 60pt</div>
+    </div>
+    <p class="note">아이콘의 반 이상을 차지하는 굵은 흰색 'D'가 활주로입니다. 네이비 비행기가 D 곡선 위를 따라 달리고, 뒤로는 D 왼쪽 위 모서리부터 긴 점선 이동 경로가 이어집니다.
+    최종 아이콘은 M2에서 Icon Composer로 다크·틴트 모드까지 만듭니다.</p>
+  </div>
+</section>
+
+<section>
+  <h2>색 견본</h2>
+  <div class="row" id="swatches"></div>
+</section>
+
+
+<template id="settings">
+  <div class="phone anim">
+    <div class="island"></div>
+    <div class="status"><span class="num">9:41</span><span>●●● ▮</span></div>
+    <div class="nav"><h3>설정</h3></div>
+    <div class="content">
+      <div class="sectionTitle">화면</div>
+      <div class="group"><div class="kv" style="border-top:0"><span class="lbl">화면 모드</span>
+        <div class="seg"><button data-mode="system">시스템</button><button data-mode="light" class="on">라이트</button><button data-mode="dark">다크</button></div></div></div>
+      <div class="sectionTitle">알림</div>
+      <div class="group">
+        <div class="kv" style="border-top:0"><span class="lbl">변경 알림</span><span class="chev">켬 ›</span></div>
+        <div class="kv"><span class="lbl">출발 알림 시점</span><span class="chev">›</span></div>
+        <div class="kv"><span class="lbl">Live Activity 자동 시작</span><span class="chev">켬 ›</span></div>
+      </div>
+      <div class="sectionTitle">일반</div>
+      <div class="group">
+        <div class="kv" style="border-top:0"><span class="lbl">공지사항</span><span class="v"><span class="dot">2</span><span class="chev">›</span></span></div>
+        <div class="kv"><span class="lbl">언어</span><span class="chev">한국어 ›</span></div>
+        <div class="kv"><span class="lbl">계정</span><span class="chev">Apple ›</span></div>
+      </div>
+    </div>
+    <div class="tabbar"><div><i>✈</i>내 항공편</div><div><i>🕘</i>지난 항공편</div><div class="on"><i>⚙</i>설정</div></div>
+  </div>
+</template>
+
+<template id="notice">
+  <div class="phone">
+    <div class="island"></div>
+    <div class="status"><span class="num">9:41</span><span>●●● ▮</span></div>
+    <div class="nav"><h3>내 항공편</h3><div class="plus">+</div></div>
+    <div class="overlay">
+      <div class="alert">
+        <span class="badge">중요 공지</span>
+        <h4>인천공항 정보 지연 안내</h4>
+        <p>공항 데이터 제공처 점검으로 10/20 02:00~04:00(KST) 동안 게이트 정보 갱신이 늦어질 수 있습니다.</p>
+        <div class="btn">확인</div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<template id="force">
+  <div class="phone">
+    <div class="island"></div>
+    <div class="status"><span class="num">9:41</span><span>●●● ▮</span></div>
+    <div class="force">
+      <div class="icon light" style="width:96px;height:96px;border-radius:22px" id="force-icon"></div>
+      <h4>업데이트가 필요합니다</h4>
+      <p>정확한 항공편 정보를 위해 최신 버전으로 업데이트해 주세요.</p>
+      <div class="cta">App Store에서 업데이트</div>
+    </div>
+  </div>
+</template>
+
+<template id="home">
+  <div class="phone">
+    <div class="island"></div>
+    <div class="status"><span class="num">9:41</span><span>●●● ▮</span></div>
+    <div class="nav"><h3>내 항공편</h3><div class="plus">+</div></div>
+    <div class="content">
+      <div class="pass">
+        <div class="top">
+          <div class="line1"><span class="dday num">D-3</span><span class="delay">지연 45분</span></div>
+          <div class="sub">XX5701 · 실제 운항 YY1075 &nbsp;<span class="chip sample" style="background:color-mix(in srgb, var(--card-fg) 12%, transparent);color:var(--card-fg2)">샘플 데이터</span></div>
+          <div class="route"><span class="code">HND</span><div class="path"><span>✈</span></div><span class="code">ICN</span></div>
+          <div class="names"><div>하네다</div><div>인천</div></div>
+          <div class="times num"><div>11/1(토) <span class="changed">10:45</span></div><div>13:40 현지</div></div>
+        </div>
+        <div class="perf"></div>
+        <div class="stub num">
+          <div><small>터미널</small><b>T3</b></div>
+          <div><small>게이트</small><b class="muted">미정</b></div>
+          <div><small>탑승 시작</small><b>10:05</b> <span class="est">추정</span></div>
+        </div>
+      </div>
+      <div class="sectionTitle">다가오는 항공편</div>
+      <div class="list">
+        <div class="item"><span class="d num">D-20</span><div><div class="t">XX712 &nbsp;ICN → NRT</div><div class="s num">11/18(수) 09:10</div></div><span class="chev">›</span></div>
+        <div class="item"><span class="d num">D-45</span><div><div class="t">XX91 &nbsp;HND → GMP</div><div class="s num">12/13(일) 18:30</div></div><span class="chev">›</span></div>
+        <div class="item"><span class="d num">D-60</span><div><div class="t">XX3 &nbsp;NRT → BKK</div><div class="s num">12/28(월) 11:00 · 자동 정보 없음</div></div><span class="chev">›</span></div>
+      </div>
+    </div>
+    <div class="tabbar"><div class="on"><i>✈</i>내 항공편</div><div><i>🕘</i>지난 항공편</div><div><i>⚙</i>설정</div></div>
+  </div>
+</template>
+
+<template id="detail">
+  <div class="phone">
+    <div class="island"></div>
+    <div class="status"><span class="num">9:41</span><span>●●● ▮</span></div>
+    <div class="back"><span>‹ 내 항공편</span><span>공유 &nbsp;⋯</span></div>
+    <div class="content">
+      <div class="summary">
+        <div style="display:flex;justify-content:space-between"><b class="num">XX5701 · D-3</b><span class="delay">지연 45분</span></div>
+        <div class="sub">✈ 실제 운항: YY항공 YY1075 — 체크인은 YY항공 카운터</div>
+      </div>
+      <div class="group">
+        <div class="head">출발 · 하네다 (HND)<span>현지 시각</span></div>
+        <div class="kv"><span class="k">출발</span><span class="v num"><span class="old">10:00</span><b class="chg">10:45</b></span></div>
+        <div class="kv"><span class="k">터미널</span><span class="v num"><span class="chip user">사용자 제보</span><b>T3</b></span></div>
+        <div class="kv"><span class="k">체크인</span><span class="v"><span class="chip action">제보하기</span><span class="none">정보 없음</span></span></div>
+        <div class="kv"><span class="k">게이트</span><span class="v"><span class="none">미정</span></span></div>
+        <div class="btns"><div>공항 안내도</div><div>지도에서 열기</div></div>
+      </div>
+      <div class="group">
+        <div class="head">도착 · 인천 (ICN)<span>현지 시각</span></div>
+        <div class="kv"><span class="k">도착</span><span class="v num"><b>13:40</b></span></div>
+        <div class="kv"><span class="k">터미널</span><span class="v num"><b>T1</b></span></div>
+        <div class="kv"><span class="k">게이트</span><span class="v num"><span class="chip changed">변경</span><b>25</b></span></div>
+        <div class="kv"><span class="k">수하물</span><span class="v"><span class="none">미정</span></span></div>
+      </div>
+      <div style="font-size:12px;color:var(--secondary);text-align:center">출처: 인천국제공항공사 · 10:30 기준</div>
+    </div>
+  </div>
+</template>
+
+<script>
+  const mount = (tpl, id, dark) => {
+    const node = document.getElementById(tpl).content.cloneNode(true);
+    const wrap = document.getElementById(id);
+    wrap.appendChild(node);
+    if (dark) wrap.classList.add('dark');
+    const cap = document.createElement('div');
+    cap.className = 'caption';
+    cap.textContent = dark ? '다크' : '라이트';
+    wrap.appendChild(cap);
+  };
+  mount('home', 'home-light', false); mount('home', 'home-dark', true);
+  mount('detail', 'detail-light', false); mount('detail', 'detail-dark', true);
+
+  // 활주로 D: 굵은 흰 D 선이 활주로, 네이비 비행기가 곡선 부분의 중앙선을 따라 시계 방향으로 달린다.
+  // 비행기 뒤에는 D 왼쪽 위 모서리부터 윗변을 지나 곡선을 따라 꼬리까지 긴 점선(이동 경로)을 그린다.
+  // theme: 다크(기본) = 네이비 배경·흰 D·네이비 요소, 라이트 = 베이지 배경·활주로 회색 D·검은 요소
+  const ICON_THEMES = {
+    dark:  { d: '#fff',    ink: '#0B2545' },   // 네이비 배경
+    light: { d: '#0B2545', ink: '#FBF7EF' },   // 아이보리 배경 (다크의 반전)
+  };
+  const icon = (size, theme = 'dark') => {
+    const left = 22, cx = 48, cy = 50, r = 30, stroke = 24;   // D 중앙선: 왼쪽 세로 x, 곡선 중심·반지름, 선 굵기
+    const leftWidth = 18;                                     // 왼쪽 세로선만 얇게 (바깥 가장자리는 그대로)
+    const h = stroke / 2, x0 = left - h;                      // 바깥 왼쪽 가장자리
+    const scale = 0.88, halfSpan = 11 * scale;                // 날개 끝이 선 안쪽에 들어오는 크기
+    const planeDeg = -15;                                     // 비행기 위치 (0° = 오른쪽, -90° = 위)
+    const trailEndDeg = planeDeg - (halfSpan + 4) / r * 180 / Math.PI;
+    const { d: dColor, ink: navy } = ICON_THEMES[theme];
+    const rad = d => d * Math.PI / 180, f = n => n.toFixed(2);
+    const pt = d => [cx + r * Math.cos(rad(d)), cy + r * Math.sin(rad(d))];
+    const [ex, ey] = pt(trailEndDeg), [px, py] = pt(planeDeg);
+    const heading = 180 + planeDeg;                           // 기수(로컬 -y)를 시계 방향 접선으로
+    return `
+    <svg viewBox="0 0 100 100" width="${size}" height="${size}">
+      <path fill="${dColor}" fill-rule="evenodd" d="
+        M${x0 + h} ${cy - r - h} H${cx} A${r + h} ${r + h} 0 0 1 ${cx} ${cy + r + h} H${x0 + h}
+        A${h} ${h} 0 0 1 ${x0} ${cy + r} V${cy - r} A${h} ${h} 0 0 1 ${x0 + h} ${cy - r - h} Z
+        M${x0 + leftWidth} ${cy - r + h} H${cx} A${r - h} ${r - h} 0 0 1 ${cx} ${cy + r - h} H${x0 + leftWidth} Z"/>
+      <path d="M${left} ${cy - r} H${cx} A${r} ${r} 0 0 1 ${f(ex)} ${f(ey)}" fill="none" stroke="${navy}"
+            stroke-width="2.8" stroke-dasharray="7 5" stroke-linecap="round"/>
+      <circle cx="${left}" cy="${cy - r}" r="3.6" fill="${navy}"/>
+      <g transform="translate(${f(px)} ${f(py)}) rotate(${f(heading)}) scale(${scale})">
+        <path d="M0 -11 C1.2 -11 1.7 -9.6 1.7 -8 L1.7 -3.2 L11 2.4 L11 5 L1.7 2.2 L1.7 7 L4.6 9.4 L4.6 11.4 L0 10.1 L-4.6 11.4 L-4.6 9.4 L-1.7 7 L-1.7 2.2 L-11 5 L-11 2.4 L-1.7 -3.2 L-1.7 -8 C-1.7 -9.6 -1.2 -11 0 -11 Z" fill="${navy}"/>
+      </g>
+    </svg>`;
+  };
+  document.getElementById('icon-big').innerHTML = icon(160);
+  document.getElementById('icon-small').innerHTML = icon(54);
+  document.getElementById('icon-big-light').innerHTML = icon(160, 'light');
+  document.getElementById('icon-small-light').innerHTML = icon(54, 'light');
+
+
+
+
+
+  mount('settings', 'settings-demo', false);
+  mount('notice', 'notice-demo', false);
+  mount('force', 'force-demo', false);
+  document.getElementById('force-icon').innerHTML = icon(84, 'light');
+  // 화면 모드 전환 데모: 누르면 애니메이션과 함께 라이트·다크가 바뀐다. 시스템은 이 브라우저 설정을 따른다.
+  const demo = document.getElementById('settings-demo');
+  demo.querySelector('.caption').textContent = '화면 모드를 눌러 보세요';
+  demo.querySelectorAll('.seg button').forEach(b => b.addEventListener('click', () => {
+    demo.querySelectorAll('.seg button').forEach(x => x.classList.toggle('on', x === b));
+    const dark = b.dataset.mode === 'dark' || (b.dataset.mode === 'system' && matchMedia('(prefers-color-scheme: dark)').matches);
+    demo.classList.toggle('dark', dark);
+  }));
+  document.querySelector('#notice-demo .caption').textContent = '중요 공지 팝업 (앱 실행 시 1회)';
+  document.querySelector('#force-demo .caption').textContent = '강제 업데이트 (닫을 수 없음)';
+
+  const sw = [
+    ['brandNavy', '#0B2545', '#14305A'], ['accent', '#1E4B8F', '#8AB8FF'],
+    ['지연·변경', '#B45309', '#FBBF24'], ['결항', '#B91C1C', '#F87171'],
+    ['카드 위 지연', '#FCD34D', '#FCD34D'], ['카드 위 결항', '#FCA5A5', '#FCA5A5'],
+  ];
+  document.getElementById('swatches').innerHTML = sw.map(([n, l, d]) => `
+    <div style="text-align:center;font-size:12px">
+      <div style="display:flex"><div style="width:56px;height:56px;background:${l};border-radius:12px 0 0 12px"></div><div style="width:56px;height:56px;background:${d};border-radius:0 12px 12px 0"></div></div>
+      <div style="margin-top:4px"><b>${n}</b><br>${l} / ${d}</div>
+    </div>`).join('');
+</script>
+</body>
+</html>

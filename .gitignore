@@ -1,0 +1,49 @@
+# macOS
+.DS_Store
+
+# Xcode / Swift
+build/
+DerivedData/
+xcuserdata/
+*.xcuserstate
+*.xcscmblueprint
+.swiftpm/
+.build/
+
+# Node (Cloud Functions)
+node_modules/
+functions/lib/
+functions/lib-test/
+*.log
+
+# Firebase
+.firebase/
+.firebaserc
+firebase-debug*.log
+firestore-debug.log
+ui-debug.log
+*.local
+
+# Local configuration and secrets
+.env
+.env.*
+!.env.example
+.secret.local
+.secrets/
+secrets/
+GoogleService-Info.plist
+*.local.xcconfig
+
+# Credentials and signing material
+*service-account*.json
+*serviceAccount*.json
+*-firebase-adminsdk-*.json
+application_default_credentials.json
+*.p8
+*.p12
+*.pfx
+*.pem
+*.key
+*.cer
+*.mobileprovision
+*.provisionprofile
