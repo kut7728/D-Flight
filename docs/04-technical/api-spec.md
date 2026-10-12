@@ -125,6 +125,15 @@
 
 ---
 
+## 5-1. `updateFlightNotify`
+
+**입력** `{ trackedId, notify: { changes?, dayBefore?, leaveForAirport?, boarding? } }` 바꿀 것만 bool로 보낸다. **출력** `{}`
+
+- 본인 `trackedFlights/{trackedId}`만 바꿀 수 있다. 없으면 `not-found`.
+- 변경 알림 발송(서버)은 `notify.changes`가 `true`이고 사용자 `notificationsEnabled`가 `true`일 때만 한다. (TD-17)
+
+---
+
 ## 6. `submitReport`
 
 공유 항공편 정보를 제보·수정한다. (S-07)
@@ -167,7 +176,7 @@
 |---|---|
 | `language` | `system` / `ko` / `ja` / `en` |
 | `pushLanguage` | `ko` / `ja` / `en` |
-| `notify.*.minutes` | 화면 설계의 선택 범위 값만 허용 |
+| `notificationsEnabled` | bool |
 
 ---
 

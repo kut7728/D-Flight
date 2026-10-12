@@ -1,0 +1,97 @@
+name: DFlight
+options:
+  bundleIdPrefix: com.dflight
+  deploymentTarget:
+    iOS: "18.0"
+  developmentLanguage: ko
+  defaultSourceDirectoryType: syncedFolder
+  postGenCommand: python3 scripts/set-known-regions.py
+configs:
+  Debug: debug
+  Mock: debug
+  Release: release
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    SWIFT_DEFAULT_ACTOR_ISOLATION: MainActor
+    SWIFT_APPROACHABLE_CONCURRENCY: YES
+    CODE_SIGN_STYLE: Automatic
+    MARKETING_VERSION: "1.0.0"
+    CURRENT_PROJECT_VERSION: "1"
+  configs:
+    Debug:
+      SWIFT_ACTIVE_COMPILATION_CONDITIONS: DEBUG
+      ENABLE_TESTABILITY: YES
+    Mock:
+      SWIFT_ACTIVE_COMPILATION_CONDITIONS: DEBUG MOCK MOCK_DATA
+      ENABLE_TESTABILITY: YES
+    Release:
+      SWIFT_ACTIVE_COMPILATION_CONDITIONS: ""
+targets:
+  DFlight:
+    type: application
+    platform: iOS
+    sources:
+      - path: DFlight
+        type: syncedFolder
+        excludes:
+          - "**/.gitkeep"
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.dflight
+        PRODUCT_NAME: DFlight
+        TARGETED_DEVICE_FAMILY: "1"
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        INFOPLIST_KEY_CFBundleDisplayName: D-Flight
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+        SWIFT_EMIT_LOC_STRINGS: YES
+  DFlightTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: DFlightTests
+        type: syncedFolder
+    dependencies:
+      - target: DFlight
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.dflight.tests
+        GENERATE_INFOPLIST_FILE: YES
+        TARGETED_DEVICE_FAMILY: "1"
+        TEST_HOST: "$(BUILT_PRODUCTS_DIR)/DFlight.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/DFlight"
+        BUNDLE_LOADER: "$(TEST_HOST)"
+schemes:
+  DFlight:
+    shared: true
+    build:
+      targets:
+        DFlight: all
+        DFlightTests: [test]
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+        - DFlightTests
+    archive:
+      config: Release
+  DFlight-Mock:
+    shared: true
+    build:
+      targets:
+        DFlight: all
+        DFlightTests: [test]
+    run:
+      config: Mock
+    test:
+      config: Mock
+      targets:
+        - DFlightTests
+    profile:
+      config: Mock
+    analyze:
+      config: Mock
+    archive:
+      config: Mock

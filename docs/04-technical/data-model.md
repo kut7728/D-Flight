@@ -25,14 +25,11 @@ notices/{noticeId}                       공지사항 (공개 읽기)
 |---|---|---|
 | `language` | string | `system` / `ko` / `ja` / `en` |
 | `pushLanguage` | string | 서버 푸시용 실제 언어 (`ko` / `ja` / `en`). `system`이면 앱이 기기 언어로 계산해 보낸다. |
-| `notify.changes` | bool | 변경 알림 |
-| `notify.dayBefore` | { enabled, minutes } | 하루 전 알림 (기본 1440분) |
-| `notify.leaveForAirport` | { enabled, minutes } | 공항 출발 알림 (기본 180분) |
-| `notify.boarding` | { enabled, minutes } | 탑승 임박 알림 (기본 40분) |
+| `notificationsEnabled` | bool | 앱 알림 전체 켜기/끄기. 끄면 항공편별 설정과 관계없이 보내지 않는다 (TD-17) |
 | `liveActivityEnabled` | bool | Live Activity 자동 시작 |
 | `createdAt`, `updatedAt` | timestamp | |
 
-임박 알림은 기기에서 예약하지만, 기기를 바꿔도 유지되도록 설정은 서버에 저장한다.
+임박 알림은 기기에서 예약하지만, 기기를 바꿔도 유지되도록 설정은 서버에 저장한다. 시점은 고정(24시간·3시간·40분 전)이라 저장하지 않는다.
 
 ### `devices/{deviceId}`
 
@@ -50,6 +47,7 @@ notices/{noticeId}                       공지사항 (공개 읽기)
 | `enteredFlightNumber` | string | 사용자가 입력한 편명 (코드쉐어 표시용) |
 | `departureDate` | string | 출발 공항 현지 날짜 `yyyy-MM-dd` |
 | `scheduledDepartureAt` | timestamp | 정렬·조회용 복사본 |
+| `notify` | { changes, dayBefore, leaveForAirport, boarding } bool | 이 항공편의 알림 4종. 등록 시 모두 `true` (TD-17) |
 | `liveActivityUpdateToken` | string? | 진행 중인 Live Activity 갱신 토큰 |
 | `createdAt` | timestamp | |
 
@@ -99,8 +97,10 @@ notices/{noticeId}                       공지사항 (공개 읽기)
 **항목 형식** — 모든 정보 항목은 같은 구조다.
 
 ```json
-{ "value": "T2", "source": "airport_data", "updatedAt": "..." }
+{ "value": "T2", "source": "airport_data", "updatedAt": "...", "previousValue": "T1" }
 ```
+
+- `previousValue`는 공항 데이터로 값이 바뀔 때 서버가 이전 값을 넣는다. 앱은 `updatedAt`이 24시간 안이면 `변경` 칩을 띄운다. 사용자 제보로 바뀔 때는 넣지 않는다. (TD-16)
 
 | `source` | 화면 표시 ([정보 표시 규칙](../03-design/display-rules.md)) |
 |---|---|
