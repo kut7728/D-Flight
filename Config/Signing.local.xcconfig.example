@@ -1,0 +1,9 @@
+// 이 파일을 Config/Signing.local.xcconfig 로 복사해서 채운다.
+// 복사본은 *.local.xcconfig 로 gitignore 된다. 예시에 실제 값을 넣지 않는다.
+//
+// DEVELOPMENT_TEAM: Apple Developer 팀 ID. 실기기 서명에 쓴다.
+// GOOGLE_REVERSED_CLIENT_ID: GoogleService-Info.plist의 REVERSED_CLIENT_ID.
+//   plist는 DFlight/Config/GoogleService-Info.plist 에 둔다. (gitignore)
+
+DEVELOPMENT_TEAM = YOUR_TEAM_ID
+GOOGLE_REVERSED_CLIENT_ID = com.googleusercontent.apps.YOUR_REVERSED_CLIENT_ID

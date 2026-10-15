@@ -19,11 +19,19 @@ private final class MyFlightsModel {
     private(set) var airports: [String: Airport] = [:]
     private(set) var hasLoaded = false
     private(set) var loadFailed = false
+    private(set) var isOffline = false
+    private(set) var lastServerSync: Date?
     private(set) var notificationsDenied = false
     private(set) var now = Date()
 
     init(repository: any FlightRepository) {
         self.repository = repository
+    }
+
+    func follow() async {
+        for await feed in repository.observeFlights() {
+            await apply(feed)
+        }
     }
 
     func reload() async {
@@ -44,7 +52,7 @@ private final class MyFlightsModel {
         do {
             try await repository.refresh()
         } catch {
-            failed = true
+            failed = !isOffline
         }
         await reload()
         if failed { loadFailed = true }
@@ -66,6 +74,16 @@ private final class MyFlightsModel {
 
     func name(for code: String, locale: Locale) -> String {
         airports[code]?.name(for: locale) ?? code
+    }
+
+    private func apply(_ feed: FlightFeed) async {
+        now = Date()
+        upcoming = partitionFlights(feed.flights, now: now).upcoming
+        isOffline = feed.isOffline
+        lastServerSync = feed.lastServerSync
+        loadFailed = feed.failed
+        hasLoaded = true
+        await cacheAirports()
     }
 
     private func cacheAirports() async {
@@ -97,6 +115,19 @@ private struct MyFlightsContent: View {
     var body: some View {
         NavigationStack(path: $path) {
             List {
+                if model.isOffline {
+                    Section {
+                        if let synced = model.lastServerSync {
+                            Text("오프라인 · 마지막 갱신 \(hourMinute(synced))")
+                                .font(.footnote)
+                                .foregroundStyle(.secondary)
+                        } else {
+                            Text("오프라인")
+                                .font(.footnote)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                }
                 if model.loadFailed {
                     Section {
                         Text("지금은 확인할 수 없습니다. 잠시 후 다시 시도해 주세요.")
@@ -201,7 +232,9 @@ private struct MyFlightsContent: View {
             .detailExternalAlert($blockedURL)
         }
         .task {
-            await model.reload()
+            await model.follow()
+        }
+        .task {
             await model.updateNotifications()
         }
         .onChange(of: scenePhase) { _, phase in
@@ -217,6 +250,17 @@ private struct MyFlightsContent: View {
         )
     }
 
+    private func hourMinute(_ date: Date) -> String {
+        date.formatted(
+            .verbatim(
+                "\(hour: .twoDigits(clock: .twentyFourHour, hourCycle: .zeroBased)):\(minute: .twoDigits)",
+                locale: locale,
+                timeZone: .current,
+                calendar: Calendar(identifier: .gregorian)
+            )
+        )
+    }
+
     private func openSettings() {
         guard let url = URL(string: UIApplication.openSettingsURLString) else { return }
         ExternalLink.open(url, blocked: $blockedURL)
@@ -229,7 +273,7 @@ private struct UpcomingFlightRow: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            DDayLabel(flight: flight.flight, now: now)
+            DDayLabel(flight: flight.flight, now: now, departureDate: flight.departureDate)
                 .font(.headline.bold())
                 .monospacedDigit()
                 .frame(minWidth: 52, alignment: .leading)

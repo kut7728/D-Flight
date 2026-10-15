@@ -1,0 +1,53 @@
+{
+  "sample": true,
+  "response": {
+    "header": { "resultCode": "00", "resultMsg": "NORMAL SERVICE." },
+    "body": {
+      "items": {
+        "item": [
+          {
+            "fid": "f-xx120",
+            "flightid": "XX120",
+            "scheduledatetime": "202610151400",
+            "estimateddatetime": "202610151410",
+            "codeshare": "N",
+            "masterflightid": null,
+            "rmkKor": "결항",
+            "depAirportCode": "GMP",
+            "arrvAirportCode": "CJU",
+            "io": "O",
+            "line": "국내"
+          },
+          {
+            "fid": "f-yy120",
+            "flightid": "YY120",
+            "scheduledatetime": "202610151400",
+            "estimateddatetime": "",
+            "codeshare": "Y",
+            "masterflightid": "XX120",
+            "rmkKor": "",
+            "depAirportCode": "GMP",
+            "arrvAirportCode": "CJU",
+            "io": "O",
+            "line": "국내"
+          },
+          {
+            "fid": "f-xx121",
+            "flightid": "XX121",
+            "scheduledatetime": "202610151500",
+            "codeshare": "N",
+            "masterflightid": null,
+            "rmkKor": "출발",
+            "depAirportCode": "CJU",
+            "arrvAirportCode": "GMP",
+            "io": "O",
+            "line": "국내"
+          }
+        ]
+      },
+      "numOfRows": 100,
+      "pageNo": 1,
+      "totalCount": 3
+    }
+  }
+}

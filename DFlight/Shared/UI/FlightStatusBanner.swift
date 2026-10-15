@@ -7,6 +7,8 @@ struct FlightStatusBanner: View {
     var flight: Flight
     var now: Date
     var isSample: Bool
+    /// 예정 시각이 없을 때 D-n에 쓴다. 출발 공항 현지 날짜 `yyyy-MM-dd`.
+    var departureDate: String? = nil
 
     @Environment(\.locale) private var locale
 
@@ -118,6 +120,9 @@ struct FlightStatusBanner: View {
                 Text("출발 \(clock)")
                     .foregroundStyle(.white)
             }
+        } else if flight.origin == .pending {
+            Text("정보 대기")
+                .foregroundStyle(bannerSecondary)
         } else {
             Text("출발 미정")
                 .foregroundStyle(bannerSecondary)
@@ -126,7 +131,7 @@ struct FlightStatusBanner: View {
 
     @ViewBuilder
     private var countdownPhrase: some View {
-        switch countdown(for: flight, now: now) {
+        switch countdown(for: flight, now: now, departureDate: departureDate) {
         case .days(let count) where count > 0:
             Text("D-\(count)")
                 .foregroundStyle(.white)
@@ -239,6 +244,8 @@ struct FlightStatusBanner: View {
             return (appString("정보 없음", locale: locale), true)
         case .undetermined:
             return (appString("미정", locale: locale), true)
+        case .awaiting where flight.origin == .pending:
+            return (appString("정보 대기", locale: locale), true)
         case .awaiting, .noAutoData:
             return (appString("정보 없음", locale: locale), true)
         }
@@ -286,7 +293,7 @@ struct FlightStatusBanner: View {
         if let clock = departureClock {
             parts.append(String(format: appString("%@ 출발", locale: locale), locale: locale, clock))
         }
-        switch countdown(for: flight, now: now) {
+        switch countdown(for: flight, now: now, departureDate: departureDate) {
         case .days(let count) where count > 0:
             parts.append(String(format: appString("%lld일 후", locale: locale), locale: locale, count))
         case .days:

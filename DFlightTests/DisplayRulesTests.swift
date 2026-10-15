@@ -58,6 +58,19 @@ struct DisplayRulesTests {
         #expect(dDay(for: sampleFlight(departure: scheduled, departureEstimated: estimated), now: noon) == .today)
     }
 
+    @Test("예정 시각이 없으면 departureDate의 출발 공항 날짜로 D-n을 센다")
+    func dDayFromDepartureDateWhenTimeMissing() {
+        let seoul = "Asia/Seoul"
+        let now = at(2026, 1, 1, 15, 0, tz: seoul)
+        var flight = sampleFlight(departure: nil, departureTimeZone: seoul, arrivalAuto: false)
+        flight.origin = .pending
+        #expect(dDay(for: flight, now: now, departureDate: "2026-01-13") == .days(12))
+        #expect(dDay(for: flight, now: now, departureDate: "2026-01-01") == .today)
+        #expect(dDay(for: flight, now: now) == .today)
+        #expect(countdown(for: flight, now: now, departureDate: "2026-01-13") == .days(12))
+        #expect(infoState(InfoItem(), side: flight.arrival, flight: flight, now: now) == .awaiting)
+    }
+
     @Test("T-30·T-31 날짜 차이. 인천→로스앤젤레스 장거리와 하네다→인천 당일은 0")
     func dayOffsetCases() {
         let scheduled = at(2026, 1, 15, 23, 50, tz: "Asia/Seoul")
@@ -244,14 +257,14 @@ struct DisplayRulesTests {
         #expect(visible.map(\.id) == (0..<50).map { "n\($0)" })
     }
 
-    @Test("편명 정규화와 형식")
+    @Test("편명은 항공사 2~3자와 숫자 1~4자리다. 숫자만·다섯 자리는 거절한다")
     func flightNumberFormat() {
         #expect(normalizeFlightNumber(" xx 5701 ") == "XX5701")
-        for text in ["XX5701", "YY1", "XXX1234", " xx 5701 ", "7C101"] {
-            #expect(isValidFlightNumber(text))
+        for text in ["XX5701", "YY1", "XXX1234", " xx 5701 ", "7C101", "NH5701A", "C7101"] {
+            #expect(isValidFlightNumber(text), "\(text)는 통과해야 한다")
         }
-        for text in ["X1", "XX12345", "XX", "5701", "대한5701", "XX5701가"] {
-            #expect(!isValidFlightNumber(text))
+        for text in ["5701", "1234", "12345", "12A345", "X1", "XX12345", "XX123456", "XX", "대한5701", "XX5701가", "XXXX1"] {
+            #expect(!isValidFlightNumber(text), "\(text)는 거절해야 한다")
         }
     }
 

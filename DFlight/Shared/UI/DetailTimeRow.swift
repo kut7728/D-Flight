@@ -5,6 +5,7 @@ struct DetailTimeRow: View {
     var time: String?
     var previousTime: String?
     var offset: Int = 0
+    var missing: LocalizedStringKey = "미정"
 
     var body: some View {
         HStack(spacing: 8) {
@@ -36,7 +37,7 @@ struct DetailTimeRow: View {
                 }
                 .lineLimit(1)
             } else {
-                Text("미정")
+                Text(missing)
                     .font(.title3.weight(.semibold))
                     .foregroundStyle(.secondary)
             }

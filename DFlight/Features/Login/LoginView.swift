@@ -7,6 +7,9 @@ struct LoginView: View {
     @Environment(\.locale) private var locale
     @State private var isWorking = false
     @State private var failed = false
+    #if !MOCK_DATA
+    @State private var appleNonce = ""
+    #endif
     @State private var policy: PolicyLink?
     @State private var linkURL: String?
 
@@ -62,36 +65,60 @@ struct LoginView: View {
         .disabled(isWorking)
         #else
         SignInWithAppleButton(.continue) { request in
+            let nonce = Nonce.random()
+            appleNonce = nonce
             request.requestedScopes = [.fullName, .email]
-        } onCompletion: { _ in }
+            request.nonce = Nonce.sha256(nonce)
+        } onCompletion: { result in
+            handleApple(result)
+        }
+        .signInWithAppleButtonStyle(colorScheme == .dark ? .white : .black)
         .frame(height: 50)
+        .disabled(isWorking)
         #endif
     }
 
     private var googleButton: some View {
         Button {
-            #if MOCK_DATA
             signIn(.google)
-            #endif
         } label: {
-            HStack(spacing: 8) {
-                Text(verbatim: "G")
-                    .font(.headline.bold())
-                    .foregroundStyle(Color(red: 0.26, green: 0.52, blue: 0.96))
+            HStack(spacing: 10) {
+                Image("GoogleG")
+                    .resizable()
+                    .frame(width: 18, height: 18)
+                    .accessibilityHidden(true)
                 Text("Google로 계속하기")
                     .font(.headline)
-                    .foregroundStyle(.primary)
             }
+            .foregroundStyle(googleForeground)
             .frame(maxWidth: .infinity)
             .frame(height: 50)
-            .background(.background, in: RoundedRectangle(cornerRadius: 8))
+            .background(googleBackground, in: RoundedRectangle(cornerRadius: 8))
             .overlay {
                 RoundedRectangle(cornerRadius: 8)
-                    .strokeBorder(Color.secondary.opacity(0.35), lineWidth: 1)
+                    .strokeBorder(googleStroke, lineWidth: 1)
             }
         }
         .buttonStyle(.plain)
         .disabled(isWorking)
+    }
+
+    private var googleBackground: Color {
+        colorScheme == .dark
+            ? Color(red: 19 / 255, green: 19 / 255, blue: 20 / 255)
+            : .white
+    }
+
+    private var googleStroke: Color {
+        colorScheme == .dark
+            ? Color(red: 142 / 255, green: 145 / 255, blue: 143 / 255)
+            : Color(red: 116 / 255, green: 119 / 255, blue: 117 / 255)
+    }
+
+    private var googleForeground: Color {
+        colorScheme == .dark
+            ? Color(red: 227 / 255, green: 227 / 255, blue: 227 / 255)
+            : Color(red: 31 / 255, green: 31 / 255, blue: 31 / 255)
     }
 
     private var policyLinks: some View {
@@ -121,20 +148,55 @@ struct LoginView: View {
         ExternalLink.open(url) { linkURL = $0 }
     }
 
-    #if MOCK_DATA
     private func signIn(_ provider: LoginProvider) {
         guard !isWorking else { return }
         isWorking = true
         Task {
             defer { isWorking = false }
-            do {
+            await run {
                 try await env.signIn(provider)
-            } catch {
+            }
+        }
+    }
+
+    #if !MOCK_DATA
+    private func handleApple(_ result: Result<ASAuthorization, Error>) {
+        switch result {
+        case .failure(let error):
+            if (error as? ASAuthorizationError)?.code == .canceled { return }
+            failed = true
+        case .success(let authorization):
+            guard
+                let apple = authorization.credential as? ASAuthorizationAppleIDCredential,
+                let tokenData = apple.identityToken,
+                let idToken = String(data: tokenData, encoding: .utf8),
+                !appleNonce.isEmpty
+            else {
                 failed = true
+                return
+            }
+            guard !isWorking else { return }
+            isWorking = true
+            let nonce = appleNonce
+            let fullName = apple.fullName
+            Task {
+                defer { isWorking = false }
+                await run {
+                    try await env.signInWithApple(idToken: idToken, rawNonce: nonce, fullName: fullName)
+                }
             }
         }
     }
     #endif
+
+    private func run(_ work: () async throws -> Void) async {
+        do {
+            try await work()
+        } catch LiveRepositoryError.cancelled {
+        } catch {
+            failed = true
+        }
+    }
 }
 
 private enum PolicyLink {

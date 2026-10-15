@@ -3,6 +3,8 @@ import SwiftUI
 struct ManualFlightEntryView: View {
     var flightNumber: String = ""
     var departureDate: String = ""
+    /// 다음 시즌 대기 등록. 공항만 필수이고 시각·터미널은 받지 않는다.
+    var pending: Bool = false
     var onRegistered: () -> Void = {}
 
     @Environment(AppEnvironment.self) private var env
@@ -12,6 +14,7 @@ struct ManualFlightEntryView: View {
             repository: env.flights,
             flightNumber: flightNumber,
             departureDate: departureDate,
+            pending: pending,
             onRegistered: onRegistered
         )
     }
@@ -23,9 +26,11 @@ private final class ManualFlightModel {
     private let repository: any FlightRepository
     let flightNumber: String
     let departureDate: String
+    let pending: Bool
 
     var departure: Airport?
     var arrival: Airport?
+    var includesDepartureTime = true
     var departureTime = Date()
     var includesArrival = false
     var arrivalTime = Date()
@@ -35,12 +40,15 @@ private final class ManualFlightModel {
     var checkIn = ""
     var baggage = ""
     private(set) var isSubmitting = false
-    private(set) var saveFailed = false
+    private(set) var saveMessage: FlightUserMessage?
+    private(set) var alreadyTracked = false
 
-    init(repository: any FlightRepository, flightNumber: String, departureDate: String) {
+    init(repository: any FlightRepository, flightNumber: String, departureDate: String, pending: Bool) {
         self.repository = repository
         self.flightNumber = flightNumber
         self.departureDate = departureDate
+        self.pending = pending
+        self.includesDepartureTime = !pending
     }
 
     var terminalOptions: [String] {
@@ -52,10 +60,17 @@ private final class ManualFlightModel {
     var canSubmit: Bool {
         guard isValidFlightNumber(flightNumber), !departureDate.isEmpty else { return false }
         guard let departure, let arrival, departure.code != arrival.code else { return false }
+        if pending, !departure.korean, !arrival.korean { return false }
         if !gate.isEmpty && !isValidGate(gate) { return false }
         if !checkIn.isEmpty && !isValidCheckInCounter(checkIn) { return false }
         if !baggage.isEmpty && !isValidBaggageBelt(baggage) { return false }
         return !isSubmitting
+    }
+
+    /// 두 공항이 골라졌는데 한국 공항이 없다. 대기 등록에서만 막는다.
+    var needsKoreanAirport: Bool {
+        guard pending, let departure, let arrival, departure.code != arrival.code else { return false }
+        return !departure.korean && !arrival.korean
     }
 
     func submit() async -> Bool {
@@ -67,22 +82,32 @@ private final class ManualFlightModel {
             departureDate: departureDate,
             depAirport: departure.code,
             arrAirport: arrival.code,
-            scheduledDepartureLocal: localComponents(on: departureDate, time: departureTime, dayOffset: 0),
+            scheduledDepartureLocal: includesDepartureTime
+                ? localComponents(on: departureDate, time: departureTime, dayOffset: 0)
+                : nil,
             scheduledArrivalLocal: includesArrival
                 ? localComponents(on: departureDate, time: arrivalTime, dayOffset: arrivalDayOffset)
                 : nil,
             arrivalDayOffset: includesArrival ? arrivalDayOffset : 0,
-            terminal: nilIfEmpty(terminal),
-            gate: nilIfEmpty(gate),
-            checkInCounter: nilIfEmpty(checkIn),
-            baggageBelt: nilIfEmpty(baggage)
+            terminal: pending ? nil : nilIfEmpty(terminal),
+            gate: pending ? nil : nilIfEmpty(gate),
+            checkInCounter: pending ? nil : nilIfEmpty(checkIn),
+            baggageBelt: pending ? nil : nilIfEmpty(baggage),
+            awaitAutoData: pending
         )
         do {
             _ = try await repository.createManual(input)
-            saveFailed = false
+            saveMessage = nil
+            alreadyTracked = false
             return true
         } catch {
-            saveFailed = true
+            if let live = error as? LiveRepositoryError, live == .alreadyExists {
+                alreadyTracked = true
+                saveMessage = nil
+                return false
+            }
+            alreadyTracked = false
+            saveMessage = flightUserMessage(for: error, notFoundIsSearchAgain: true)
             return false
         }
     }
@@ -98,12 +123,13 @@ private struct ManualFlightForm: View {
     @Environment(\.locale) private var locale
     @State private var model: ManualFlightModel
 
-    init(repository: any FlightRepository, flightNumber: String, departureDate: String, onRegistered: @escaping () -> Void) {
+    init(repository: any FlightRepository, flightNumber: String, departureDate: String, pending: Bool, onRegistered: @escaping () -> Void) {
         self.onRegistered = onRegistered
         _model = State(initialValue: ManualFlightModel(
             repository: repository,
             flightNumber: flightNumber,
-            departureDate: departureDate
+            departureDate: departureDate,
+            pending: pending
         ))
     }
 
@@ -111,9 +137,15 @@ private struct ManualFlightForm: View {
         @Bindable var model = model
         Form {
             Section {
-                Text("입력한 정보는 같은 항공편을 등록한 사용자에게 공유됩니다.")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                Group {
+                    if model.pending {
+                        Text("아직 공개된 시간표가 없습니다. 출발 3일 전부터 자동으로 확인합니다.")
+                    } else {
+                        Text("입력한 정보는 같은 항공편을 등록한 사용자에게 공유됩니다.")
+                    }
+                }
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
             }
             Section {
                 LabeledContent("편명") {
@@ -141,11 +173,23 @@ private struct ManualFlightForm: View {
                         .font(.caption)
                         .foregroundStyle(Color("StatusDanger"))
                 }
+                if model.needsKoreanAirport {
+                    Text("출발이나 도착 중 한 곳은 한국 공항이어야 합니다.")
+                        .font(.caption)
+                        .foregroundStyle(Color("StatusDanger"))
+                }
             }
             Section {
-                DatePicker("출발 예정 시각", selection: $model.departureTime, displayedComponents: .hourAndMinute)
+                if model.pending {
+                    Toggle("출발 예정 시각", isOn: $model.includesDepartureTime)
+                }
+                if model.includesDepartureTime {
+                    DatePicker("출발 예정 시각", selection: $model.departureTime, displayedComponents: .hourAndMinute)
+                }
             } footer: {
-                Text("출발 공항 현지 시각")
+                if model.includesDepartureTime {
+                    Text("출발 공항 현지 시각")
+                }
             }
             Section {
                 Toggle("도착 예정 시각", isOn: $model.includesArrival)
@@ -164,6 +208,7 @@ private struct ManualFlightForm: View {
                     Text("도착 공항 현지 시각. 날짜 차이는 출발일 기준입니다.")
                 }
             }
+            if !model.pending {
             Section {
                 Picker("터미널", selection: $model.terminal) {
                     Text("선택 안 함").tag("")
@@ -194,10 +239,15 @@ private struct ManualFlightForm: View {
                 }
                 .foregroundStyle(Color("StatusDanger"))
             }
-            if model.saveFailed {
+            }
+            if model.alreadyTracked {
                 Section {
-                    Text("지금은 확인할 수 없습니다. 잠시 후 다시 시도해 주세요.")
-                        .foregroundStyle(.secondary)
+                    Text("이미 등록된 항공편입니다")
+                }
+            }
+            if let message = model.saveMessage {
+                Section {
+                    manualFailureText(message)
                 }
             }
             Section {
@@ -217,7 +267,7 @@ private struct ManualFlightForm: View {
                 .disabled(!model.canSubmit)
             }
         }
-        .navigationTitle("직접 입력")
+        .navigationTitle(model.pending ? "대기 등록" : "직접 입력")
         .navigationBarTitleDisplayMode(.inline)
         .onChange(of: model.departure?.code) { _, _ in
             if !model.terminalOptions.contains(model.terminal) {
@@ -282,6 +332,22 @@ private struct AirportSearchView: View {
             hasLoaded = true
         }
     }
+}
+
+private func manualFailureText(_ message: FlightUserMessage) -> some View {
+    Group {
+        switch message {
+        case .unavailable:
+            Text("지금은 확인할 수 없습니다. 잠시 후 다시 시도해 주세요.")
+        case .retrySoon:
+            Text("잠시 후 다시 시도해 주세요")
+        case .searchAgain:
+            Text("다시 검색해 주세요")
+        case .invalidInput:
+            Text("입력 내용을 확인해 주세요")
+        }
+    }
+    .foregroundStyle(.secondary)
 }
 
 private func localComponents(on ymd: String, time: Date, dayOffset: Int) -> DateComponents {

@@ -1,0 +1,97 @@
+{
+  "sample": true,
+  "response": {
+    "header": { "resultCode": "00", "resultMsg": "NORMAL SERVICE." },
+    "body": {
+      "items": {
+        "item": [
+          {
+            "flightId": "XX100",
+            "scheduleDatetime": "202610151200",
+            "estimatedDatetime": "202610151230",
+            "airportCode": "NRT",
+            "codeshare": "Master",
+            "masterFlightId": null,
+            "terminalId": "P03",
+            "gateNumber": "12",
+            "chkinRange": "A01-A12",
+            "carousel": "",
+            "remark": "지연",
+            "typeOfFlight": "I",
+            "passengerOrCargo": "P"
+          },
+          {
+            "flightId": "YY200",
+            "scheduleDatetime": "202610151200",
+            "estimatedDatetime": "",
+            "airportCode": "NRT",
+            "codeshare": "Slave",
+            "masterFlightId": "XX100",
+            "terminalId": "",
+            "gateNumber": "",
+            "chkinRange": "-",
+            "remark": ""
+          },
+          {
+            "flightId": "XX300",
+            "scheduleDatetime": "202610152350",
+            "airportCode": "HND",
+            "codeshare": "Master",
+            "masterFlightId": null,
+            "terminalId": "P01",
+            "gateNumber": "3",
+            "chkinRange": "A B C D",
+            "remark": "출발"
+          },
+          {
+            "flightId": "XX401",
+            "scheduleDatetime": "202610150900",
+            "airportCode": "KIX",
+            "codeshare": "Master",
+            "masterFlightId": null,
+            "terminalId": "P01",
+            "gateNumber": "1",
+            "chkinRange": "-",
+            "remark": "예정"
+          },
+          {
+            "flightId": "XX403",
+            "scheduleDatetime": "202610151100",
+            "airportCode": "KIX",
+            "codeshare": "Master",
+            "masterFlightId": null,
+            "terminalId": "P01",
+            "gateNumber": "4",
+            "chkinRange": "C",
+            "remark": null
+          },
+          {
+            "flightId": "XX404",
+            "scheduleDatetime": "202610151130",
+            "airportCode": "KIX",
+            "codeshare": "Master",
+            "masterFlightId": null,
+            "terminalId": "P02",
+            "gateNumber": "5",
+            "chkinRange": "D",
+            "remark": "마감예정"
+          },
+          {
+            "flightId": "XX402",
+            "scheduleDatetime": "202610151000",
+            "airportCode": "KIX",
+            "codeshare": "Master",
+            "masterFlightId": null,
+            "terminalId": "P02",
+            "gateNumber": "2",
+            "chkinRange": "B",
+            "remark": "탑승중"
+          }
+        ]
+      },
+      "numOfRows": 2000,
+      "pageNo": 1,
+      "totalCount": 7
+    }
+  }
+}

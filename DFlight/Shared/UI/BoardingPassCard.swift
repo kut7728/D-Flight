@@ -11,6 +11,9 @@ struct BoardingPassCard: View {
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     private var flight: Flight { tracked.flight }
+    private var timePlaceholder: LocalizedStringKey {
+        flight.origin == .pending ? LocalizedStringKey("정보 대기") : LocalizedStringKey("미정")
+    }
     private var stacksVertically: Bool { dynamicTypeSize.isAccessibilitySize }
     private var cancelled: Bool { flight.status.value == .cancelled }
 
@@ -62,9 +65,9 @@ struct BoardingPassCard: View {
     }
 
     private var topRow: some View {
-        let day = dDay(for: flight, now: now)
+        let day = dDay(for: flight, now: now, departureDate: tracked.departureDate)
         return pair {
-            DDayLabel(flight: flight, now: now, onCard: true)
+            DDayLabel(flight: flight, now: now, onCard: true, departureDate: tracked.departureDate)
                 .font(.headline.bold())
                 .monospacedDigit()
         } trailing: {
@@ -143,18 +146,18 @@ struct BoardingPassCard: View {
         return Group {
             if stacksVertically {
                 VStack(alignment: .leading, spacing: 12) {
-                    ClockBlock(side: flight.departure, showsDate: true, alignment: .leading)
+                    ClockBlock(side: flight.departure, showsDate: true, alignment: .leading, missing: timePlaceholder)
                     VStack(alignment: .leading, spacing: 4) {
-                        ClockBlock(side: flight.arrival, showsDate: false, alignment: .leading)
+                        ClockBlock(side: flight.arrival, showsDate: false, alignment: .leading, missing: timePlaceholder)
                         marks
                     }
                 }
             } else {
                 HStack(alignment: .lastTextBaseline, spacing: 12) {
-                    ClockBlock(side: flight.departure, showsDate: true, alignment: .leading)
+                    ClockBlock(side: flight.departure, showsDate: true, alignment: .leading, missing: timePlaceholder)
                     Spacer(minLength: 8)
                     HStack(alignment: .firstTextBaseline, spacing: 4) {
-                        ClockBlock(side: flight.arrival, showsDate: false, alignment: .trailing)
+                        ClockBlock(side: flight.arrival, showsDate: false, alignment: .trailing, missing: timePlaceholder)
                         marks
                     }
                 }
@@ -283,7 +286,8 @@ struct BoardingPassCard: View {
         case .undetermined:
             return (appString("미정", locale: locale), true)
         case .awaiting:
-            return (appString("출발 3일 전부터 표시", locale: locale), true)
+            let key = flight.origin == .pending ? "정보 대기" : "출발 3일 전부터 표시"
+            return (appString(key, locale: locale), true)
         case .noAutoData:
             return (appString("정보 없음", locale: locale), true)
         }
@@ -336,7 +340,7 @@ struct BoardingPassCard: View {
                 arrivalName
             )
         )
-        switch dDay(for: flight, now: now) {
+        switch dDay(for: flight, now: now, departureDate: tracked.departureDate) {
         case .days(let count):
             parts.append(String(format: appString("%lld일 후", locale: locale), locale: locale, count))
         case .today:
@@ -379,9 +383,10 @@ struct DDayLabel: View {
     var flight: Flight
     var now: Date
     var onCard: Bool = false
+    var departureDate: String? = nil
 
     var body: some View {
-        switch dDay(for: flight, now: now) {
+        switch dDay(for: flight, now: now, departureDate: departureDate) {
         case .days(let count):
             Text("D-\(count)")
         case .today:
@@ -412,6 +417,7 @@ private struct ClockBlock: View {
     var side: AirportSide
     var showsDate: Bool
     var alignment: HorizontalAlignment
+    var missing: LocalizedStringKey = "미정"
 
     @Environment(\.locale) private var locale
 
@@ -436,7 +442,7 @@ private struct ClockBlock: View {
                         .font(.title2.bold())
                         .foregroundStyle(changed ? Color("CardWarning") : Color("CardText"))
                 } else {
-                    Text("미정")
+                    Text(missing)
                         .font(.subheadline)
                         .foregroundStyle(Color("CardSecondary"))
                 }

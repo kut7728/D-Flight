@@ -11,7 +11,7 @@ nonisolated enum Countdown: Hashable, Sendable {
     case cancelled
 }
 
-nonisolated func countdown(for flight: Flight, now: Date) -> Countdown {
+nonisolated func countdown(for flight: Flight, now: Date, departureDate: String? = nil) -> Countdown {
     switch flight.status.value {
     case .cancelled:
         return .cancelled
@@ -25,14 +25,14 @@ nonisolated func countdown(for flight: Flight, now: Date) -> Countdown {
 
     // 지연·조기는 예정 시각이 아니라 변경된 시각까지 센다.
     guard let departure = flight.departure.estimatedAt.value ?? flight.departure.scheduledAt else {
-        return countdown(matching: dDay(for: flight, now: now))
+        return countdown(matching: dDay(for: flight, now: now, departureDate: departureDate))
     }
     let interval = departure.timeIntervalSince(now)
     if interval <= 0 {
         return .departed
     }
     if interval >= 24 * 60 * 60 {
-        switch dDay(for: flight, now: now) {
+        switch dDay(for: flight, now: now, departureDate: departureDate) {
         case .days(let count) where count > 0:
             return .days(count)
         case .arrived:

@@ -1,0 +1,47 @@
+{
+  "sample": true,
+  "response": {
+    "header": { "resultCode": "00", "resultMsg": "NORMAL SERVICE." },
+    "body": {
+      "items": {
+        "item": [
+          {
+            "flightid": "XX160",
+            "scheduledatetime": "202610151800",
+            "codeshare": "N",
+            "masterflightid": null,
+            "rmkKor": "도착",
+            "depAirportCode": "CJU",
+            "arrAirportCode": "GMP",
+            "io": "I",
+            "line": "국내"
+          },
+          {
+            "flightid": "YY160",
+            "scheduledatetime": "202610151900",
+            "codeshare": "N",
+            "masterflightid": null,
+            "rmkKor": "도착",
+            "depAirportCode": "HND",
+            "arrvAirportCode": "GMP",
+            "io": "I",
+            "line": "국제"
+          },
+          {
+            "flightid": "XX161",
+            "scheduledatetime": "202610152000",
+            "codeshare": "N",
+            "masterflightid": null,
+            "rmkKor": "도착",
+            "depAirportCode": "KIX",
+            "arrAirportCode": "PUS",
+            "io": "I"
+          }
+        ]
+      },
+      "numOfRows": 100,
+      "pageNo": 1,
+      "totalCount": 3
+    }
+  }
+}

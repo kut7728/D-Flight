@@ -6,6 +6,14 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		701F01B2D26D8571CA535240 /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = 74C26CAC963AFB49EC667E25 /* GoogleSignIn */; };
+		A9135EC68E90763EE92A433E /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 279185FC227849D26ED15E42 /* FirebaseAuth */; };
+		D9A1202832E735D4A80D5E71 /* FirebaseFunctions in Frameworks */ = {isa = PBXBuildFile; productRef = 6E83C4C47B0BB5F11CC4D42C /* FirebaseFunctions */; };
+		DA521FFFBFD1D1AD16C4FE42 /* FirebaseAppCheck in Frameworks */ = {isa = PBXBuildFile; productRef = 954FE2C8D198639F4945D333 /* FirebaseAppCheck */; };
+		FADA9CA5E2F3DA496CFD46D2 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 73DAF590736CDAB1875547A6 /* FirebaseFirestore */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		E80CFEA4421FC3C39CABFFA3 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -17,14 +25,18 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		2A8E3E66BD2611A8FA0072A7 /* Shared.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Shared.xcconfig; sourceTree = "<group>"; };
 		3AA41F582E61D528711DE900 /* DFlightTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = DFlightTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		7DBCB131341F447519F86511 /* DFlight.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = DFlight.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		7DBCB131341F447519F86511 /* DFlight.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = DFlight.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		7521D967E57AA67F24C1447F /* Exceptions for "DFlight" folder in "DFlight" target */ = {
+		7521D967E57AA67F24C1447F /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
+				Config/.gitkeep,
+				DFlight.entitlements,
+				Info.plist,
 				Services/.gitkeep,
 			);
 			target = EA87C47F1D3A8CB4C6BC055F /* DFlight */;
@@ -34,23 +46,47 @@
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		25F58A3CB50734AC0C3A7592 /* DFlightTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
 			path = DFlightTests;
 			sourceTree = "<group>";
 		};
 		6241C4017DB6A0A38F4DA89E /* DFlight */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
-				7521D967E57AA67F24C1447F /* Exceptions for "DFlight" folder in "DFlight" target */,
+				7521D967E57AA67F24C1447F /* PBXFileSystemSynchronizedBuildFileExceptionSet */,
+			);
+			explicitFileTypes = {
+			};
+			explicitFolders = (
 			);
 			path = DFlight;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
+/* Begin PBXFrameworksBuildPhase section */
+		6EF3F0392F5C1D7862694086 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A9135EC68E90763EE92A433E /* FirebaseAuth in Frameworks */,
+				FADA9CA5E2F3DA496CFD46D2 /* FirebaseFirestore in Frameworks */,
+				D9A1202832E735D4A80D5E71 /* FirebaseFunctions in Frameworks */,
+				DA521FFFBFD1D1AD16C4FE42 /* FirebaseAppCheck in Frameworks */,
+				701F01B2D26D8571CA535240 /* GoogleSignIn in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
 /* Begin PBXGroup section */
 		36C053341A3B10140BA97E56 = {
 			isa = PBXGroup;
 			children = (
+				B96EDE2F95055252C3D0FA80 /* Config */,
 				6241C4017DB6A0A38F4DA89E /* DFlight */,
 				25F58A3CB50734AC0C3A7592 /* DFlightTests */,
 				70D84BB5446A8A3F6048DC49 /* Products */,
@@ -64,6 +100,14 @@
 				3AA41F582E61D528711DE900 /* DFlightTests.xctest */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		B96EDE2F95055252C3D0FA80 /* Config */ = {
+			isa = PBXGroup;
+			children = (
+				2A8E3E66BD2611A8FA0072A7 /* Shared.xcconfig */,
+			);
+			path = Config;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -97,6 +141,7 @@
 			buildPhases = (
 				DD838E459646F2BD02DBA149 /* Sources */,
 				EBE5AC029CA0AC4B0D1EDC05 /* Resources */,
+				6EF3F0392F5C1D7862694086 /* Frameworks */,
 			);
 			buildRules = (
 			);
@@ -107,6 +152,11 @@
 			);
 			name = DFlight;
 			packageProductDependencies = (
+				279185FC227849D26ED15E42 /* FirebaseAuth */,
+				73DAF590736CDAB1875547A6 /* FirebaseFirestore */,
+				6E83C4C47B0BB5F11CC4D42C /* FirebaseFunctions */,
+				954FE2C8D198639F4945D333 /* FirebaseAppCheck */,
+				74C26CAC963AFB49EC667E25 /* GoogleSignIn */,
 			);
 			productName = DFlight;
 			productReference = 7DBCB131341F447519F86511 /* DFlight.app */;
@@ -139,6 +189,10 @@
 			);
 			mainGroup = 36C053341A3B10140BA97E56;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				80BD4C5E7E70B1A80613C19C /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */,
+				047DE565F49B0A0CCE4D3EB6 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 70D84BB5446A8A3F6048DC49 /* Products */;
 			projectDirPath = "";
@@ -195,12 +249,15 @@
 /* Begin XCBuildConfiguration section */
 		017D5DEE067B69E8F56C0260 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 2A8E3E66BD2611A8FA0072A7 /* Shared.xcconfig */;
 			buildSettings = {
+				APP_ATTEST_ENVIRONMENT = production;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = DFlight/DFlight.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
-				DEVELOPMENT_TEAM = S27R5C5NF6;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = DFlight/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "D-Flight";
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -399,11 +456,13 @@
 		D48DA6D5F2DC38A767AE87D5 /* Mock */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				APP_ATTEST_ENVIRONMENT = development;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
-				DEVELOPMENT_TEAM = S27R5C5NF6;
 				GENERATE_INFOPLIST_FILE = YES;
+				GOOGLE_REVERSED_CLIENT_ID = com.dflight.placeholder;
+				INFOPLIST_FILE = DFlight/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "D-Flight";
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -488,12 +547,15 @@
 		};
 		F06ECBB69442D904A46396EE /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 2A8E3E66BD2611A8FA0072A7 /* Shared.xcconfig */;
 			buildSettings = {
+				APP_ATTEST_ENVIRONMENT = development;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = DFlight/DFlight.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
-				DEVELOPMENT_TEAM = S27R5C5NF6;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = DFlight/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "D-Flight";
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -542,6 +604,53 @@
 			defaultConfigurationName = Debug;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		047DE565F49B0A0CCE4D3EB6 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/firebase/firebase-ios-sdk";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 12.0.0;
+			};
+		};
+		80BD4C5E7E70B1A80613C19C /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/google/GoogleSignIn-iOS";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 10.0.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		279185FC227849D26ED15E42 /* FirebaseAuth */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 047DE565F49B0A0CCE4D3EB6 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAuth;
+		};
+		6E83C4C47B0BB5F11CC4D42C /* FirebaseFunctions */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 047DE565F49B0A0CCE4D3EB6 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseFunctions;
+		};
+		73DAF590736CDAB1875547A6 /* FirebaseFirestore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 047DE565F49B0A0CCE4D3EB6 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseFirestore;
+		};
+		74C26CAC963AFB49EC667E25 /* GoogleSignIn */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 80BD4C5E7E70B1A80613C19C /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */;
+			productName = GoogleSignIn;
+		};
+		954FE2C8D198639F4945D333 /* FirebaseAppCheck */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 047DE565F49B0A0CCE4D3EB6 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAppCheck;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 890A8DD3D15DCF2EEDD3E3A0 /* Project object */;
 }

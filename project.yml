@@ -6,6 +6,14 @@ options:
   developmentLanguage: ko
   defaultSourceDirectoryType: syncedFolder
   postGenCommand: python3 scripts/set-known-regions.py
+packages:
+  # Firebase 13은 app-check 12, GoogleSignIn 10은 app-check 11이라 같이 못 푼다. 맞는 최신 메이저는 12다.
+  firebase-ios-sdk:
+    url: https://github.com/firebase/firebase-ios-sdk
+    from: 12.0.0
+  GoogleSignIn-iOS:
+    url: https://github.com/google/GoogleSignIn-iOS
+    from: 10.0.0
 configs:
   Debug: debug
   Mock: debug
@@ -36,17 +44,44 @@ targets:
         type: syncedFolder
         excludes:
           - "**/.gitkeep"
+          - Info.plist
+          - DFlight.entitlements
+    dependencies:
+      - package: firebase-ios-sdk
+        product: FirebaseAuth
+      - package: firebase-ios-sdk
+        product: FirebaseFirestore
+      - package: firebase-ios-sdk
+        product: FirebaseFunctions
+      - package: firebase-ios-sdk
+        product: FirebaseAppCheck
+      - package: GoogleSignIn-iOS
+        product: GoogleSignIn
+    configFiles:
+      Debug: Config/Shared.xcconfig
+      Release: Config/Shared.xcconfig
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.dflight
         PRODUCT_NAME: DFlight
         TARGETED_DEVICE_FAMILY: "1"
         GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_FILE: DFlight/Info.plist
         INFOPLIST_KEY_UILaunchScreen_Generation: YES
         INFOPLIST_KEY_CFBundleDisplayName: D-Flight
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
         SWIFT_EMIT_LOC_STRINGS: YES
+      configs:
+        Debug:
+          CODE_SIGN_ENTITLEMENTS: DFlight/DFlight.entitlements
+          APP_ATTEST_ENVIRONMENT: development
+        Release:
+          CODE_SIGN_ENTITLEMENTS: DFlight/DFlight.entitlements
+          APP_ATTEST_ENVIRONMENT: production
+        Mock:
+          APP_ATTEST_ENVIRONMENT: development
+          GOOGLE_REVERSED_CLIENT_ID: com.dflight.placeholder
   DFlightTests:
     type: bundle.unit-test
     platform: iOS

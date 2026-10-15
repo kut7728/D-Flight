@@ -6,6 +6,7 @@ import Foundation
 // - XX5701 + 날짜: 그 날짜가 등록돼 있으면 alreadyTracked, 아니면 코드쉐어(YY1075 운항) 1건
 // - XX100: 두 구간 found (ICN→HND, HND→ICN)
 // - XX5702: 사용자 공유 1건 (origin user, 출발 터미널 source user)
+// - XX800: notFound(outside_schedule_season) — 다음 시즌. 대기 등록으로 이어진다
 // - XX999: notFound
 // - XX000: 네트워크 오류
 // - 그 외: notFound
@@ -21,13 +22,13 @@ enum MockDataError: Error {
 @MainActor
 final class MockFlightRepository: FlightRepository {
     private let clock: Clock
-    private let airports: [Airport]
     private var flightsByKey: [String: Flight] = [:]
     private var tracked: [TrackedFlight] = []
+    private var flightObservations: [UUID: AsyncStream<FlightFeed>.Continuation] = [:]
+    private var cancelledFlightObservations: Set<UUID> = []
 
     init(includeTracked: Bool = true) {
         clock = Clock()
-        airports = SampleAirports.all
         guard includeTracked else { return }
         let seeded = Self.samples(clock: clock)
         Self.validate(seeded, now: clock.now)
@@ -40,6 +41,27 @@ final class MockFlightRepository: FlightRepository {
     func trackedFlights() async throws -> [TrackedFlight] {
         try await pause()
         return tracked
+    }
+
+    func observeFlights() -> AsyncStream<FlightFeed> {
+        AsyncStream { continuation in
+            let id = UUID()
+            Task { @MainActor in
+                if self.cancelledFlightObservations.remove(id) != nil {
+                    continuation.finish()
+                    return
+                }
+                self.flightObservations[id] = continuation
+                continuation.yield(self.flightFeed())
+            }
+            continuation.onTermination = { @Sendable _ in
+                Task { @MainActor in
+                    if self.flightObservations.removeValue(forKey: id) == nil {
+                        self.cancelledFlightObservations.insert(id)
+                    }
+                }
+            }
+        }
     }
 
     func refresh() async throws {
@@ -64,7 +86,10 @@ final class MockFlightRepository: FlightRepository {
         if number == "XX5702" {
             return .found([sharedFlight(on: date)])
         }
-        return .notFound
+        if number == "XX800" {
+            return .notFound(.outsideScheduleSeason)
+        }
+        return .notFound(nil)
     }
 
     func track(flight: Flight, enteredFlightNumber: String) async throws -> TrackedFlight {
@@ -78,6 +103,7 @@ final class MockFlightRepository: FlightRepository {
         flightsByKey[flight.key] = flight
         let item = makeTracked(flight, entered: normalizeFlightNumber(enteredFlightNumber))
         tracked.append(item)
+        publishFlights()
         return item
     }
 
@@ -86,35 +112,55 @@ final class MockFlightRepository: FlightRepository {
         let number = normalizeFlightNumber(input.flightNumber)
         let depZone = zone(of: input.depAirport)
         let arrZone = zone(of: input.arrAirport)
-        let departure = localDate(input.departureDate, time: input.scheduledDepartureLocal, timeZone: depZone, dayOffset: 0)
-            ?? clock.now
+        let pending = input.awaitAutoData
+        let departure = input.scheduledDepartureLocal.flatMap {
+            localDate(input.departureDate, time: $0, timeZone: depZone, dayOffset: 0)
+        }
         let arrival = input.scheduledArrivalLocal.flatMap {
             localDate(input.departureDate, time: $0, timeZone: arrZone, dayOffset: input.arrivalDayOffset)
         }
-        let date = clock.dateString(departure, timeZone: depZone)
+        let sortDate = departure
+            ?? localDate(input.departureDate, time: DateComponents(hour: 0, minute: 0), timeZone: depZone, dayOffset: 0)
+            ?? clock.now
+        let date = pending ? input.departureDate : clock.dateString(departure ?? clock.now, timeZone: depZone)
         let key = "\(number)_\(date)_\(input.depAirport)"
         if let existing = tracked.first(where: { $0.flightKey == key }) {
             return existing
         }
-        let flight = flight(
+        var flight = flight(
             number: number,
             marketing: nil,
             depCode: input.depAirport,
             arrCode: input.arrAirport,
-            departure: departure,
+            departure: departure ?? sortDate,
             arrival: arrival,
-            origin: .user,
+            origin: pending ? .pending : .user,
             status: .scheduled,
-            sync: SyncInfo(phase: .done),
-            depTerminal: userItem(input.terminal),
-            depGate: userItem(input.gate),
-            depCheckIn: input.checkInCounter.map { userItem($0) },
-            arrBaggage: input.baggageBelt.map { userItem($0) },
+            sync: SyncInfo(phase: pending ? .schedule : .done),
+            depTerminal: pending ? InfoItem() : userItem(input.terminal),
+            depGate: pending ? InfoItem() : userItem(input.gate),
+            depCheckIn: pending ? nil : input.checkInCounter.map { userItem($0) },
+            arrBaggage: pending ? nil : input.baggageBelt.map { userItem($0) },
             trackers: 1
         )
-        flightsByKey[key] = flight
-        let item = makeTracked(flight, entered: number)
+        if pending && departure == nil {
+            flight.departure.scheduledAt = nil
+        }
+        if pending {
+            flight.key = key
+            flight.status.source = nil
+            flight.status.updatedAt = nil
+            flight.sync.lastSuccessAt = nil
+        }
+        flightsByKey[flight.key] = flight
+        var item = makeTracked(flight, entered: number)
+        if pending {
+            item.departureDate = input.departureDate
+            item.scheduledDepartureAt = sortDate
+            item.flight = flight
+        }
         tracked.append(item)
+        publishFlights()
         return item
     }
 
@@ -123,6 +169,7 @@ final class MockFlightRepository: FlightRepository {
         guard let index = tracked.firstIndex(where: { $0.id == id }) else { return }
         let key = tracked[index].flightKey
         tracked.remove(at: index)
+        publishFlights()
         guard var flight = flightsByKey[key] else { return }
         flight.trackerCount = max(0, flight.trackerCount - 1)
         flightsByKey[key] = flight
@@ -134,6 +181,7 @@ final class MockFlightRepository: FlightRepository {
             throw MockDataError.notFound
         }
         tracked[index].notify = notify
+        publishFlights()
     }
 
     func trackedFlight(id: String) async throws -> TrackedFlight? {
@@ -155,23 +203,18 @@ final class MockFlightRepository: FlightRepository {
         flight.isSample = true
         tracked[index].flight = flight
         flightsByKey[flightKey] = flight
+        publishFlights()
     }
 
     func airports(matching query: String) async throws -> [Airport] {
         try await pause()
-        let keyword = query.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !keyword.isEmpty else { return airports }
-        return airports.filter { airport in
-            airport.code.localizedCaseInsensitiveContains(keyword)
-                || airport.nameKo.localizedCaseInsensitiveContains(keyword)
-                || airport.nameJa.localizedCaseInsensitiveContains(keyword)
-                || airport.nameEn.localizedCaseInsensitiveContains(keyword)
-        }
+        return AirportCatalog.search(query.trimmingCharacters(in: .whitespacesAndNewlines))
     }
 
     func airport(code: String) async throws -> Airport? {
         let needle = code.trimmingCharacters(in: .whitespacesAndNewlines)
-        return airports.first { $0.code.caseInsensitiveCompare(needle) == .orderedSame }
+        guard !needle.isEmpty else { return nil }
+        return AirportCatalog.airport(code: needle)
     }
 
     func removeAllTracked() {
@@ -182,6 +225,18 @@ final class MockFlightRepository: FlightRepository {
         }
         for key in flightsByKey.keys {
             flightsByKey[key]?.trackerCount = 0
+        }
+        publishFlights()
+    }
+
+    private func flightFeed() -> FlightFeed {
+        FlightFeed(flights: tracked, isOffline: false, lastServerSync: nil, failed: false)
+    }
+
+    private func publishFlights() {
+        let feed = flightFeed()
+        for continuation in flightObservations.values {
+            continuation.yield(feed)
         }
     }
 }
@@ -199,6 +254,10 @@ final class MockAccountRepository: AccountRepository {
     func signIn(_ provider: LoginProvider) async throws {
         try await pause()
         currentProvider = provider
+    }
+
+    func signInWithApple(idToken _: String, rawNonce _: String, fullName _: PersonNameComponents?) async throws {
+        try await signIn(.apple)
     }
 
     func signOut() async throws {
@@ -332,7 +391,7 @@ private func pause() async throws {
 
 extension MockFlightRepository {
     fileprivate func zone(of code: String) -> String {
-        airports.first { $0.code == code }?.timeZone ?? "Etc/UTC"
+        AirportCatalog.airport(code: code)?.timeZone ?? "Etc/UTC"
     }
 
     fileprivate func userItem(_ value: String?) -> InfoItem {

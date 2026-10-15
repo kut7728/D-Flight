@@ -10,9 +10,9 @@ struct RegisterFlightView: View {
 
 private enum SearchOutcome: Equatable {
     case none
-    case notFound
-    case failed
-    case alreadyTracked(TrackedFlight)
+    case notFound(NotFoundReason?)
+    case failed(FlightUserMessage)
+    case alreadyTracked(TrackedFlight?)
     case found
 }
 
@@ -29,7 +29,7 @@ private final class RegisterFlightModel {
     var selectedKey: String?
     private(set) var isSearching = false
     private(set) var isSubmitting = false
-    private(set) var trackFailed = false
+    private(set) var notice: FlightUserMessage?
 
     init(repository: any FlightRepository) {
         self.repository = repository
@@ -67,21 +67,21 @@ private final class RegisterFlightModel {
         outcome = .none
         results = []
         selectedKey = nil
-        trackFailed = false
+        notice = nil
     }
 
     func search() async {
         normalizeNumber()
         guard isValidFlightNumber(flightNumber) else { return }
         isSearching = true
-        trackFailed = false
+        notice = nil
         defer { isSearching = false }
         do {
             let result = try await repository.search(flightNumber: flightNumber, date: departureDateString)
             switch result {
             case .found(let flights):
                 if flights.isEmpty {
-                    outcome = .notFound
+                    outcome = .notFound(nil)
                     results = []
                     selectedKey = nil
                 } else {
@@ -90,8 +90,8 @@ private final class RegisterFlightModel {
                     selectedKey = flights.count == 1 ? flights[0].key : nil
                     await cacheAirports(in: flights)
                 }
-            case .notFound:
-                outcome = .notFound
+            case .notFound(let reason):
+                outcome = .notFound(reason)
                 results = []
                 selectedKey = nil
             case .alreadyTracked(let tracked):
@@ -100,7 +100,11 @@ private final class RegisterFlightModel {
                 selectedKey = nil
             }
         } catch {
-            outcome = .failed
+            if let live = error as? LiveRepositoryError, live == .alreadyExists {
+                outcome = .alreadyTracked(nil)
+            } else {
+                outcome = .failed(flightUserMessage(for: error))
+            }
             results = []
             selectedKey = nil
         }
@@ -112,10 +116,16 @@ private final class RegisterFlightModel {
         defer { isSubmitting = false }
         do {
             _ = try await repository.track(flight: flight, enteredFlightNumber: normalizeFlightNumber(flightNumber))
-            trackFailed = false
+            notice = nil
             return true
         } catch {
-            trackFailed = true
+            if let live = error as? LiveRepositoryError, live == .alreadyExists {
+                let existing = try? await repository.trackedFlights().first { $0.flightKey == flight.key }
+                outcome = .alreadyTracked(existing)
+                notice = nil
+                return false
+            }
+            notice = flightUserMessage(for: error, notFoundIsSearchAgain: true)
             return false
         }
     }
@@ -208,37 +218,52 @@ private struct RegisterFlightContent: View {
 
     @ViewBuilder
     private var result: some View {
-        if model.trackFailed || model.outcome == .failed {
+        if let notice = model.notice {
             Section {
-                Text("지금은 확인할 수 없습니다. 잠시 후 다시 시도해 주세요.")
-                    .foregroundStyle(.secondary)
+                failureText(notice)
             }
         }
         switch model.outcome {
-        case .none, .failed:
+        case .none:
             EmptyView()
-        case .notFound:
+        case .failed(let message):
             Section {
-                Text("자동 정보를 찾지 못했습니다")
-                Text("한국 공항이 포함되지 않은 항공편은 자동 정보를 지원하지 않습니다.")
+                failureText(message)
+            }
+        case .notFound(let reason):
+            Section {
+                if reason != .outsideScheduleSeason {
+                    Text("자동 정보를 찾지 못했습니다")
+                }
+                notFoundCopy(reason)
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
-                Text("편명이나 날짜가 잘못됐을 수 있습니다.")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                NavigationLink("직접 입력해서 등록") {
-                    ManualFlightEntryView(
-                        flightNumber: model.flightNumber,
-                        departureDate: model.departureDateString,
-                        onRegistered: { dismiss() }
-                    )
+                if reason == .outsideScheduleSeason {
+                    NavigationLink("대기 등록") {
+                        ManualFlightEntryView(
+                            flightNumber: model.flightNumber,
+                            departureDate: model.departureDateString,
+                            pending: true,
+                            onRegistered: { dismiss() }
+                        )
+                    }
+                } else {
+                    NavigationLink("직접 입력해서 등록") {
+                        ManualFlightEntryView(
+                            flightNumber: model.flightNumber,
+                            departureDate: model.departureDateString,
+                            onRegistered: { dismiss() }
+                        )
+                    }
                 }
             }
         case .alreadyTracked(let tracked):
             Section {
                 Text("이미 등록된 항공편입니다")
-                NavigationLink("보기") {
-                    FlightDetailView(trackedFlight: tracked, readOnly: false)
+                if let tracked {
+                    NavigationLink("보기") {
+                        FlightDetailView(trackedFlight: tracked, readOnly: false)
+                    }
                 }
             }
         case .found:
@@ -280,6 +305,37 @@ private struct RegisterFlightContent: View {
                 }
             }
         }
+    }
+}
+
+private func failureText(_ message: FlightUserMessage) -> some View {
+    Group {
+        switch message {
+        case .unavailable:
+            Text("지금은 확인할 수 없습니다. 잠시 후 다시 시도해 주세요.")
+        case .retrySoon:
+            Text("잠시 후 다시 시도해 주세요")
+        case .searchAgain:
+            Text("다시 검색해 주세요")
+        case .invalidInput:
+            Text("입력 내용을 확인해 주세요")
+        }
+    }
+    .foregroundStyle(.secondary)
+}
+
+@ViewBuilder
+private func notFoundCopy(_ reason: NotFoundReason?) -> some View {
+    switch reason {
+    case .noKoreanAirportData:
+        Text("한국 공항이 포함되지 않은 항공편은 자동 정보를 지원하지 않습니다.")
+    case .notInSchedule:
+        Text("편명이나 날짜가 잘못됐을 수 있습니다.")
+    case .outsideScheduleSeason:
+        Text("아직 공개된 시간표가 없습니다. 출발 3일 전부터 자동으로 확인합니다.")
+    case nil:
+        Text("한국 공항이 포함되지 않은 항공편은 자동 정보를 지원하지 않습니다.")
+        Text("편명이나 날짜가 잘못됐을 수 있습니다.")
     }
 }
 

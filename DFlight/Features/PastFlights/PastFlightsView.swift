@@ -21,6 +21,14 @@ private final class PastFlightsModel {
         self.repository = repository
     }
 
+    func follow() async {
+        for await feed in repository.observeFlights() {
+            past = partitionFlights(feed.flights, now: Date()).past
+            loadFailed = feed.failed
+            hasLoaded = true
+        }
+    }
+
     func reload() async {
         do {
             let all = try await repository.trackedFlights()
@@ -103,7 +111,7 @@ private struct PastFlightsContent: View {
             }
         }
         .task {
-            await model.reload()
+            await model.follow()
         }
     }
 

@@ -1,0 +1,48 @@
+{
+  "sample": true,
+  "response": {
+    "header": { "resultCode": "00", "resultMsg": "NORMAL SERVICE." },
+    "body": {
+      "items": {
+        "item": [
+          {
+            "domesticNum": "XX170",
+            "domesticStartTime": "0700",
+            "domesticArrivalTime": "0810",
+            "domesticStdate": "2026-03-29T00:00:00",
+            "domesticEddate": "2026-10-24T00:00:00",
+            "domesticThu": "Y",
+            "startcityCode": "GMP",
+            "arrivalcityCode": "CJU",
+            "startcity": "서울/김포",
+            "arrivalcity": "제주"
+          },
+          {
+            "domesticNum": "YY170",
+            "domesticStartTime": "0900",
+            "domesticArrivalTime": "1010",
+            "domesticStdate": "2026-03-29T00:00:00",
+            "domesticEddate": "2026-10-24T00:00:00",
+            "domesticThu": "N",
+            "domesticWed": "Y",
+            "startcityCode": "GMP",
+            "arrivalcityCode": "CJU"
+          },
+          {
+            "domesticNum": "XX171",
+            "domesticStartTime": "1000",
+            "domesticArrivalTime": "1120",
+            "domesticStdate": "2026-03-29T00:00:00",
+            "domesticEddate": "2026-10-24T00:00:00",
+            "domesticThu": "Y",
+            "startcityCode": "CJU",
+            "arrivalcityCode": "GMP"
+          }
+        ]
+      },
+      "numOfRows": 100,
+      "pageNo": 1,
+      "totalCount": 3
+    }
+  }
+}

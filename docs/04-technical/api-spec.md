@@ -38,12 +38,12 @@
 
 **입력**
 ```json
-{ "flightNumber": "NH5701", "departureDate": "2026-11-01" }
+{ "flightNumber": "XX5701", "departureDate": "2026-11-01" }
 ```
 
 | 필드 | 규칙 |
 |---|---|
-| `flightNumber` | `^[A-Z0-9]{2}[A-Z]?[0-9]{1,4}[A-Z]?$` (대문자 변환·공백 제거 후) |
+| `flightNumber` | `^(?:[A-Z]{2}[A-Z]?|[A-Z][0-9]|[0-9][A-Z])[0-9]{1,4}[A-Z]?$` (대문자 변환·공백 제거 후, 숫자만인 항공사 코드는 거부) |
 | `departureDate` | `yyyy-MM-dd`, 오늘(출발지 기준 -1일 허용) ~ 1년 뒤 |
 
 **출력**
@@ -51,8 +51,8 @@
 {
   "candidates": [
     {
-      "flightKey": "OZ1075_2026-11-01_HND",
-      "operating": { "airline": "OZ", "flightNumber": "OZ1075" },
+      "flightKey": "YY1075_2026-11-01_HND",
+      "operating": { "airline": "YY", "flightNumber": "YY1075" },
       "departure": { "airport": "HND", "scheduledAt": "2026-11-01T01:00:00Z", "timeZone": "Asia/Tokyo" },
       "arrival":   { "airport": "ICN", "scheduledAt": "2026-11-01T03:30:00Z", "timeZone": "Asia/Seoul" },
       "dataLevel": "schedule",
@@ -66,7 +66,7 @@
 | 필드 | 설명 |
 |---|---|
 | `dataLevel` | `realtime`(운항 현황) / `schedule`(시간표 기준) / `user`(다른 사용자가 직접 등록) |
-| `notFoundReason` | 후보가 없을 때: `no_korean_airport_data` / `not_in_schedule` |
+| `notFoundReason` | 후보가 없을 때: `no_korean_airport_data` / `not_in_schedule` / `outside_schedule_season`(날짜가 공개된 시즌 일정 밖이고 D-3 전. 대기 등록 가능, TD-18) |
 
 검색 순서: ① `flights`의 `searchKeys`에서 이미 있는 항공편 → ② 공공 API → ③ 없으면 `notFoundReason`.
 
@@ -76,7 +76,7 @@
 
 검색 결과 후보를 내 항공편으로 등록한다.
 
-**입력** `{ "flightKey": "...", "enteredFlightNumber": "NH5701" }`
+**입력** `{ "flightKey": "...", "enteredFlightNumber": "XX5701" }`
 **출력** `{ "trackedId": "..." }`
 
 - `flights` 문서가 없으면 검색 결과로 만든다. (검색 결과는 서버가 10분간 임시 보관)
@@ -92,7 +92,7 @@
 **입력**
 ```json
 {
-  "flightNumber": "MM101",
+  "flightNumber": "XX101",
   "departureDate": "2026-11-01",
   "departureAirport": "NRT",
   "arrivalAirport": "KIX",
@@ -107,13 +107,15 @@
 |---|---|---|
 | 편명, 날짜 | ✅ | `searchFlight`와 같음 |
 | 출발·도착 공항 | ✅ | 공항 기본 데이터에 있는 IATA 코드, 서로 달라야 함 |
-| 출발 시각 | ✅ | `HH:mm`, 출발 공항 현지 |
+| 출발 시각 | ✅ (대기 등록이면 선택) | `HH:mm`, 출발 공항 현지 |
+| `awaitAutoData` | | `true`면 대기 등록. 출발·도착 중 한 곳 이상이 한국 공항이어야 한다. 시각을 비워 둘 수 있다 (TD-18) |
 | 도착 시각, 날짜 차이 | | `HH:mm`, `-1`~`2` |
 | `fields` | | `submitReport`와 같은 규칙 |
 
 **출력** `{ "trackedId": "...", "flightKey": "..." }`
 
 - 같은 키의 문서가 이미 있으면 새로 만들지 않고 그 문서에 등록한다.
+- 대기 등록(`awaitAutoData`)은 `origin = pending`으로 만든다. `pollFlights`가 하루 1회 시즌 일정을, D-3부터 운항 현황을 조회해 찾으면 공항 데이터로 채우고 `origin = airport_data`로 바꾼다. 운항 편명이 입력 편명과 다르면(코드쉐어) `operating`과 `searchKeys`를 갱신하고 문서 키는 그대로 둔다.
 
 ---
 
@@ -141,7 +143,7 @@
 **입력**
 ```json
 {
-  "flightKey": "OZ1075_2026-11-01_HND",
+  "flightKey": "YY1075_2026-11-01_HND",
   "changes": {
     "departure.gate": "108",
     "departure.checkInCounter": null
@@ -177,6 +179,9 @@
 | `language` | `system` / `ko` / `ja` / `en` |
 | `pushLanguage` | `ko` / `ja` / `en` |
 | `notificationsEnabled` | bool |
+| `liveActivityEnabled` | bool |
+
+- 표에 없는 필드는 `invalid-argument`로 거부한다.
 
 ---
 

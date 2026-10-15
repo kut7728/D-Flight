@@ -29,6 +29,18 @@
 3. **자정.** 변경 시각 기준 조회(`searchdtCode=E`)는 예정 시각이 전날 23시대인 편을 당일 결과에 넣을 수 있다. 시각 필드의 날짜를 따른다.
 4. **한도 헤더.** `x-ratelimit-limit` / `x-ratelimit-remaining`. 리셋 시각 헤더는 없다. 인천 운항 현황은 출발·도착이 각각 500, 일정은 각각 1,000. 한국공항공사 실시간 조회는 출발·도착이 5,000을 같이 쓰고, 스케줄·검색은 각각 5,000이다. 초기화 시각은 한도를 소진하지 않아 확인하지 않았다.
 
+### M4에서 확인한 요청·응답 형식 (2026-10-15)
+
+실제 값은 저장하지 않았다. 키 이름과 형식만 기록한다.
+
+| API | 요청 | 응답 키 (요점) |
+|---|---|---|
+| 인천 운항 현황 | `searchdtCode=E`, `searchDate`, `searchFrom/To`, `passengerOrCargo=P`, 2,000행 가능 | `flightId`, `scheduleDatetime`·`estimatedDatetime`(12자리), `terminalId`(P01~P03), `gateNumber`, `chkinRange`(`-`는 없음), `carousel`(도착, 빈 값은 없음), `codeshare`(Master/Slave), `masterFlightId`, `remark` |
+| 인천 일정 | 파라미터 없이 시즌 전체 | `flightid`, `st`(HHMM), `airportcode`, `firstdate`/`lastdate`, `monday`~`sunday`(Y/N) |
+| 한국공항공사 `/depart`·`/arrival` | **`type=json`과 `_type=json` 둘 다**, `searchday`, 공항은 **`airport_code`**. **한 페이지 100행 이하** (300 이상은 빈 응답) | 소문자 `scheduledatetime`·`estimateddatetime`, `flightid`, `codeshare`(Y/N), `masterflightid`, `io`(O/I), `line`, `rmkKor`, `depAirportCode`, 도착 공항은 `/depart`에서 `arrvAirportCode`, `/arrival`에서 `arrAirportCode` |
+| 한국공항공사 `/info` | 공항은 **`schAirCode`** | `airFln`, `airport`, `std`·`etd`(HHMM), `gate`, `io`(O/I) |
+| 한국공항공사 스케줄 `int`·`dom` | `schDate`, `schDeptCityCode` | 국제 `internationalNum`·`internationalTime`·`internationalIoType`(OUT/IN)·`internationalStdate`(`YYYY-MM-DDTHH:MM:SS`)·요일 Y/N·`airportCode`·`cityCode`. 국내 `domesticNum`·`domesticStartTime`·`domesticArrivalTime`·`startcityCode`·`arrivalcityCode` |
+
 ## 2. 조회 주기
 
 | 구간 | 주기 | 사용 API |
@@ -87,7 +99,7 @@ Cloud Scheduler 무료 작업 3개 안에서 운영한다.
 
 | 종류 | 보내는 곳 | 방법 |
 |---|---|---|
-| 변경 알림 | 서버 | FCM. 사용자 `notify.changes`가 켜진 경우만 |
+| 변경 알림 | 서버 | FCM. 사용자 `notificationsEnabled`와 등록 항공편 `notify.changes`가 모두 켜진 경우만 (TD-17) |
 | 임박 알림 | 앱 | 로컬 알림 예약 |
 | Live Activity 시작 | 서버 | FCM + `liveActivityStartToken`. `liveActivityEnabled`인 경우만 |
 | Live Activity 갱신·종료 | 서버 | FCM + `liveActivityUpdateToken` |
@@ -116,6 +128,12 @@ Cloud Scheduler 무료 작업 3개 안에서 운영한다.
 | 95% ~ | `frequent` 구간(출발 6시간 이내)만 조회. 새 검색은 `resource-exhausted` |
 
 실패 시 다음 주기에 다시 시도한다. 연속 2회 실패하면 앱이 '확인 실패'를 표시한다.
+
+### M4 구현 제한
+
+- 검색의 95% 한도 검사는 호출 전 확인이며, 동시에 시작한 요청을 선예약하지 않는다. 호출 수는 트랜잭션으로 누적하지만 절대적인 호출·청구 상한을 보장하지 않는다.
+- 코드쉐어 문서 이전은 항공편과 사용자 등록을 한 트랜잭션으로 옮긴다. 이전할 등록 문서가 498개를 넘으면 데이터를 보존하며 이전을 거부한다. 대규모 사용 전에는 재시도 가능한 분할 이전이 필요하다.
+- 시각이 없는 대기 등록편의 목록 정렬 기준은 출발 공항 현지 날짜의 자정이다. 실제 출발 시각으로 표시하지 않는다.
 
 ## 7. 호출량 추정
 

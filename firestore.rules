@@ -1,0 +1,59 @@
+rules_version = '2';
+
+// 맞는 허용이 없으면 거부. 클라이언트 쓰기는 전부 막는다. 쓰기는 서버(Admin SDK)만.
+// Firestore App Check 강제는 콘솔 설정이다. 이 규칙 파일로는 켜지지 않는다.
+// users 아래는 재귀 와일드카드를 쓰지 않는다. 쓰면 private 거부보다 본인 읽기가 이긴다.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return signedIn() && request.auth.uid == uid;
+    }
+
+    match /users/{uid} {
+      allow read: if isOwner(uid);
+      allow write: if false;
+
+      match /devices/{deviceId} {
+        allow read: if isOwner(uid);
+        allow write: if false;
+      }
+
+      match /trackedFlights/{trackedId} {
+        allow read: if isOwner(uid);
+        allow write: if false;
+      }
+
+      // 서버 전용 한도. 본인 users 읽기가 여기로 내려오지 않는다.
+      match /private/{document=**} {
+        allow read, write: if false;
+      }
+    }
+
+    match /flights/{flightKey} {
+      allow read: if signedIn();
+      allow write: if false;
+
+      match /reportHistory/{historyId} {
+        allow read, write: if false;
+      }
+    }
+
+    match /system/{document=**} {
+      allow read, write: if false;
+    }
+
+    match /config/app {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    match /notices/{noticeId} {
+      allow read: if true;
+      allow write: if false;
+    }
+  }
+}

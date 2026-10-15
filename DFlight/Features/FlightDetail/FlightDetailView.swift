@@ -44,6 +44,21 @@ final class FlightDetailViewModel {
         }
     }
 
+    func follow(_ repository: any FlightRepository) async {
+        let id = tracked.id
+        for await feed in repository.observeFlights() {
+            guard let fresh = feed.flights.first(where: { $0.id == id }) else { continue }
+            tracked = fresh
+            now = Date()
+            if departureAirport?.code != fresh.flight.departure.airport {
+                departureAirport = try? await repository.airport(code: fresh.flight.departure.airport)
+            }
+            if arrivalAirport?.code != fresh.flight.arrival.airport {
+                arrivalAirport = try? await repository.airport(code: fresh.flight.arrival.airport)
+            }
+        }
+    }
+
     func delete(_ repository: any FlightRepository) async throws {
         try await repository.untrack(id: tracked.id)
     }
@@ -77,7 +92,8 @@ struct FlightDetailView: View {
                     enteredFlightNumber: model.tracked.enteredFlightNumber,
                     flight: flight,
                     now: model.now,
-                    isSample: model.tracked.isSample || flight.isSample
+                    isSample: model.tracked.isSample || flight.isSample,
+                    departureDate: model.tracked.departureDate
                 )
                 .listRowInsets(EdgeInsets(top: 8, leading: 0, bottom: 8, trailing: 0))
                 .listRowBackground(Color(.systemGroupedBackground))
@@ -154,6 +170,7 @@ struct FlightDetailView: View {
             }
             await model.reload(env.flights)
             await loadNotificationSetting()
+            await model.follow(env.flights)
         }
         .sheet(isPresented: $showReport, onDismiss: {
             Task { await model.reload(env.flights) }
@@ -251,7 +268,8 @@ struct FlightDetailView: View {
                 title: showsCheckIn ? "출발" : "도착",
                 time: clock(side.estimatedAt.value ?? side.scheduledAt, timeZone: side.timeZone),
                 previousTime: changedClock(side),
-                offset: offset
+                offset: offset,
+                missing: flight.origin == .pending ? LocalizedStringKey("정보 대기") : LocalizedStringKey("미정")
             )
             .detailListRow()
             infoRow("터미널", item: side.terminal, side: side, dimmed: flight.status.value == .cancelled)
@@ -275,6 +293,9 @@ struct FlightDetailView: View {
         InfoRow(
             title: title,
             state: infoState(item, side: side, flight: flight, now: model.now),
+            awaitingLabel: flight.origin == .pending
+                ? LocalizedStringKey("정보 대기")
+                : LocalizedStringKey("출발 3일 전부터 표시"),
             dimmed: dimmed
         )
         .detailListRow()

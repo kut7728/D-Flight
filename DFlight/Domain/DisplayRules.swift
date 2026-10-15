@@ -17,7 +17,7 @@ nonisolated enum InfoItemState: Hashable, Sendable {
     case checkFailed(lastValue: String?, since: Date?)
 }
 
-nonisolated func dDay(for flight: Flight, now: Date) -> DDay {
+nonisolated func dDay(for flight: Flight, now: Date, departureDate: String? = nil) -> DDay {
     switch flight.status.value {
     case .arrived:
         return .arrived
@@ -26,7 +26,7 @@ nonisolated func dDay(for flight: Flight, now: Date) -> DDay {
     case .scheduled, .delayed, .cancelled, .unknown:
         break
     }
-    guard let days = daysUntilOriginDeparture(flight, now: now) else { return .today }
+    guard let days = daysUntilOriginDeparture(flight, now: now, departureDate: departureDate) else { return .today }
     if days > 0 { return .days(days) }
     if days == 0 { return .today }
     // 결항은 날짜가 지나도 출발함이 아니다. 지난 목록 이동은 isPast가 맡는다.
@@ -70,6 +70,10 @@ nonisolated func infoState(_ item: InfoItem, side: AirportSide, flight: Flight, 
         }
         let changed = item.source == .airportData && item.previousValue != nil && changedWithin24Hours(item.updatedAt, now: now)
         return .confirmedAirport(value, changed: changed, previous: changed ? item.previousValue : nil)
+    }
+    // 시간표가 없으면 날짜와 상관없이 대기. 값이 생기면 위 분기에서 보여 준다.
+    if flight.origin == .pending {
+        return .awaiting
     }
     guard side.autoDataSupported else { return .noAutoData }
     // 출발 공항 현지 날짜로 3일보다 더 남았으면 정보 대기.
@@ -134,11 +138,10 @@ nonisolated func normalizeFlightNumber(_ text: String) -> String {
     text.uppercased().filter { !$0.isWhitespace }
 }
 
+/// 항공사 2~3자(두 글자가 둘 다 숫자는 아님) + 숫자 1~4자리 + 선택 접미 영문.
 nonisolated func isValidFlightNumber(_ text: String) -> Bool {
     let normalized = normalizeFlightNumber(text)
-    // 3자 코드는 영문만. 2자 코드는 문자를 하나 이상 포함한다 (5701, XX12345 거절).
-    if normalized.wholeMatch(of: /^[A-Z]{3}[0-9]{1,4}$/) != nil { return true }
-    return normalized.wholeMatch(of: /^(?:[A-Z][A-Z0-9]|[A-Z0-9][A-Z])[0-9]{1,4}$/) != nil
+    return normalized.wholeMatch(of: /^(?:[A-Z]{2}[A-Z]?|[A-Z][0-9]|[0-9][A-Z])[0-9]{1,4}[A-Z]?$/) != nil
 }
 
 nonisolated func isValidGate(_ text: String) -> Bool {
@@ -202,14 +205,23 @@ nonisolated func shareText(
     return "\(title)\n\(route)\n\(place)\nD-Flight"
 }
 
-private nonisolated func daysUntilOriginDeparture(_ flight: Flight, now: Date) -> Int? {
-    guard let departure = flight.departure.scheduledAt ?? flight.departure.estimatedAt.value else { return nil }
+private nonisolated func daysUntilOriginDeparture(_ flight: Flight, now: Date, departureDate: String? = nil) -> Int? {
     let calendar = gregorian(flight.departure.timeZone)
+    let instant = flight.departure.scheduledAt ?? flight.departure.estimatedAt.value
+    let target = instant ?? departureDate.flatMap { civilDate($0, calendar: calendar) }
+    guard let target else { return nil }
     return calendar.dateComponents(
         [.day],
         from: calendar.startOfDay(for: now),
-        to: calendar.startOfDay(for: departure)
+        to: calendar.startOfDay(for: target)
     ).day
+}
+
+/// `yyyy-MM-dd`를 출발 공항 시간대의 그 날로 읽는다.
+private nonisolated func civilDate(_ ymd: String, calendar: Calendar) -> Date? {
+    let parts = ymd.split(separator: "-").compactMap { Int($0) }
+    guard parts.count == 3 else { return nil }
+    return calendar.date(from: DateComponents(year: parts[0], month: parts[1], day: parts[2]))
 }
 
 private nonisolated func changedWithin24Hours(_ updatedAt: Date?, now: Date) -> Bool {

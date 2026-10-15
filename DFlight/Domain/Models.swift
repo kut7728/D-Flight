@@ -70,6 +70,8 @@ nonisolated struct OperatingFlight: Codable, Hashable, Sendable {
 nonisolated enum FlightOrigin: String, Codable, Hashable, Sendable {
     case airportData = "airport_data"
     case user
+    /// 시간표가 아직 없다. 출발 3일 전부터 서버가 공항 데이터로 채운다.
+    case pending
 }
 
 nonisolated struct Flight: Identifiable, Codable, Hashable, Sendable {
@@ -122,6 +124,8 @@ nonisolated struct Airport: Codable, Hashable, Sendable {
     var timeZone: String
     var terminals: [String]
     var mapURL: URL?
+    /// 한국 공항. 카탈로그의 country가 KR일 때 참.
+    var korean: Bool = false
 
     func name(for locale: Locale) -> String {
         switch locale.language.languageCode?.identifier {
@@ -165,10 +169,18 @@ nonisolated enum LoginProvider: String, Codable, Hashable, Sendable {
     case google
 }
 
+/// `searchFlight`의 `notFoundReason`.
+nonisolated enum NotFoundReason: String, Codable, Hashable, Sendable {
+    case noKoreanAirportData = "no_korean_airport_data"
+    case notInSchedule = "not_in_schedule"
+    /// 공개된 시즌 시간표 밖이고 출발 3일 전보다 이르다. 대기 등록은 가능하다.
+    case outsideScheduleSeason = "outside_schedule_season"
+}
+
 nonisolated enum FlightSearchResult: Hashable, Sendable {
     /// 구간이 1개 이상. 사용자가 공유한 항공편이 섞일 수 있다.
     case found([Flight])
-    case notFound
+    case notFound(NotFoundReason?)
     case alreadyTracked(TrackedFlight)
 }
 
@@ -177,13 +189,15 @@ nonisolated struct ManualFlightInput: Codable, Hashable, Sendable {
     var departureDate: String
     var depAirport: String
     var arrAirport: String
-    var scheduledDepartureLocal: DateComponents
+    var scheduledDepartureLocal: DateComponents? = nil
     var scheduledArrivalLocal: DateComponents? = nil
     var arrivalDayOffset: Int = 0
     var terminal: String? = nil
     var gate: String? = nil
     var checkInCounter: String? = nil
     var baggageBelt: String? = nil
+    /// 참이면 대기 등록. 서버는 origin을 pending으로 만들고 나중에 공항 데이터를 채운다.
+    var awaitAutoData: Bool = false
 }
 
 /// `nil`은 그대로 두고, `.some(nil)`은 값을 지운다.

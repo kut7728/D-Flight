@@ -3,6 +3,7 @@ import SwiftUI
 struct InfoRow: View {
     var title: LocalizedStringKey
     var state: InfoItemState
+    var awaitingLabel: LocalizedStringKey = "출발 3일 전부터 표시"
     var dimmed: Bool = false
 
     var body: some View {
@@ -39,7 +40,7 @@ struct InfoRow: View {
         case .undetermined:
             placeholder("미정", prominent: true)
         case .awaiting:
-            placeholder("출발 3일 전부터 표시", prominent: false)
+            placeholder(awaitingLabel, prominent: false)
         case .noAutoData:
             placeholder("정보 없음", prominent: true)
         case .checkFailed(let lastValue, _):

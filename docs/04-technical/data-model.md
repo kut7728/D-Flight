@@ -61,7 +61,7 @@ notices/{noticeId}                       공지사항 (공개 읽기)
 
 ```
 {운항 편명}_{출발 현지 날짜}_{출발 공항}
-예: OZ1075_2026-11-01_HND
+예: YY1075_2026-11-01_HND
 ```
 
 - 운항 편명은 **실제 운항 편명**이다. 코드쉐어 편명으로 등록해도 같은 문서를 공유한다.
@@ -72,8 +72,8 @@ notices/{noticeId}                       공지사항 (공개 읽기)
 | 필드 | 설명 |
 |---|---|
 | `operating` | { airline, flightNumber } 실제 운항 |
-| `searchKeys` | [`OZ1075_2026-11-01`, `NH5701_2026-11-01`] 코드쉐어 포함 검색용 |
-| `origin` | 직접 등록 여부. `airport_data` / `user` |
+| `searchKeys` | [`YY1075_2026-11-01`, `XX5701_2026-11-01`] 코드쉐어 포함 검색용 |
+| `origin` | `airport_data` / `user`(직접 입력) / `pending`(대기 등록, 자동 정보를 기다림. TD-18) |
 | `departure` | 공항 정보 (아래) |
 | `arrival` | 공항 정보 (아래) |
 | `status` | { value, source, updatedAt } — `scheduled` / `delayed` / `cancelled` / `departed` / `arrived` / `unknown` |

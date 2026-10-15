@@ -1,0 +1,29 @@
+{
+  "sample": true,
+  "response": {
+    "header": { "resultCode": "00", "resultMsg": "NORMAL SERVICE." },
+    "body": {
+      "items": {
+        "item": {
+          "flightId": "YY500",
+          "scheduleDatetime": "202610160830",
+          "estimatedDatetime": "",
+          "airportCode": "NRT",
+          "codeshare": "Master",
+          "masterFlightId": null,
+          "terminalId": "P01",
+          "gateNumber": "7",
+          "chkinRange": "Z9",
+          "carousel": "",
+          "exitNumber": "A",
+          "remark": "착륙",
+          "typeOfFlight": "I",
+          "passengerOrCargo": "P"
+        }
+      },
+      "numOfRows": 2000,
+      "pageNo": 1,
+      "totalCount": 1
+    }
+  }
+}

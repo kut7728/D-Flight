@@ -1,0 +1,59 @@
+{
+  "sample": true,
+  "response": {
+    "header": { "resultCode": "00", "resultMsg": "NORMAL SERVICE." },
+    "body": {
+      "items": {
+        "item": [
+          {
+            "flightid": "XX110",
+            "airportcode": "NRT",
+            "st": "0930",
+            "firstdate": "20260329",
+            "lastdate": "20261024",
+            "monday": "N",
+            "tuesday": "N",
+            "wednesday": "N",
+            "thursday": "Y",
+            "friday": "N",
+            "saturday": "N",
+            "sunday": "N"
+          },
+          {
+            "flightid": "YY110",
+            "airportcode": "HND",
+            "st": "1015",
+            "firstdate": "20260329",
+            "lastdate": "20261024",
+            "monday": "Y",
+            "tuesday": "Y",
+            "wednesday": "Y",
+            "thursday": "N",
+            "friday": "Y",
+            "saturday": "Y",
+            "sunday": "Y"
+          },
+          {
+            "flightid": "XX111",
+            "airportcode": "KIX",
+            "st": "1200",
+            "firstdate": "20260329",
+            "lastdate": "20261014",
+            "thursday": "Y"
+          },
+          {
+            "flightid": "YY111",
+            "airportcode": "KIX",
+            "st": "1400",
+            "firstdate": "20261016",
+            "lastdate": "20261024",
+            "thursday": "Y"
+          }
+        ]
+      },
+      "numOfRows": 3000,
+      "pageNo": 1,
+      "totalCount": 4
+    }
+  }
+}

@@ -69,6 +69,7 @@ final class SettingsViewModel {
     func deleteAccount(_ env: AppEnvironment, locale: Locale) async {
         do {
             try await env.deleteAccount()
+        } catch LiveRepositoryError.cancelled {
         } catch {
             errorMessage = appString("계정을 삭제하지 못했습니다", locale: locale)
         }

@@ -1,15 +1,26 @@
 import SwiftUI
 
+#if !MOCK_DATA
+import GoogleSignIn
+#endif
+
 @main
 struct DFlightApp: App {
     #if MOCK_DATA
     @State private var appEnvironment = AppEnvironment.mock()
+    #else
+    @State private var launch = LiveLaunch()
     #endif
 
     var body: some Scene {
         WindowGroup {
             root
                 .modifier(RootChrome())
+                #if !MOCK_DATA
+                .onOpenURL { url in
+                    GIDSignIn.sharedInstance.handle(url)
+                }
+                #endif
         }
     }
 
@@ -20,10 +31,31 @@ struct DFlightApp: App {
             .environment(appEnvironment)
             .environment(appEnvironment.readNotices)
         #else
-        LivePlaceholderView()
+        if let environment = launch.environment {
+            RootView()
+                .environment(environment)
+                .environment(environment.readNotices)
+        } else {
+            FirebaseConfigMissingView()
+        }
         #endif
     }
 }
+
+#if !MOCK_DATA
+@MainActor
+private final class LiveLaunch {
+    let environment: AppEnvironment?
+
+    init() {
+        if FirebaseBootstrap.configure() {
+            environment = AppEnvironment.live()
+        } else {
+            environment = nil
+        }
+    }
+}
+#endif
 
 private struct RootChrome: ViewModifier {
     @AppStorage("appearance") private var appearance = "system"

@@ -5,7 +5,7 @@ import Observation
 @MainActor
 @Observable
 final class NoticeReadStore {
-    private static let storageKey = "readNoticeIDs"
+    static let storageKey = "readNoticeIDs"
 
     private(set) var ids: Set<String>
 

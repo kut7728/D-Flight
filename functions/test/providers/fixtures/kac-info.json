@@ -1,0 +1,44 @@
+{
+  "sample": true,
+  "response": {
+    "header": { "resultCode": "00", "resultMsg": "NORMAL SERVICE." },
+    "body": {
+      "items": {
+        "item": [
+          {
+            "airFln": "XX130",
+            "airport": "GMP",
+            "city": "도쿄",
+            "std": "1540",
+            "etd": "1600",
+            "gate": "22",
+            "io": "O",
+            "line": "국제",
+            "rmkKor": "탑승중",
+            "airlineKorean": "가상항공"
+          },
+          {
+            "airFln": "YY131",
+            "airport": "GMP",
+            "std": "1600",
+            "gate": "4",
+            "io": "I",
+            "line": "국제",
+            "rmkKor": "도착"
+          },
+          {
+            "airFln": "XX132",
+            "airport": "PUS",
+            "std": "0900",
+            "gate": "1",
+            "io": "O",
+            "rmkKor": "예정"
+          }
+        ]
+      },
+      "numOfRows": 100,
+      "pageNo": 1,
+      "totalCount": 3
+    }
+  }
+}

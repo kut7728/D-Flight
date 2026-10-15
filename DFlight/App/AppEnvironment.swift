@@ -1,6 +1,10 @@
 import Foundation
 import Observation
 
+#if !MOCK_DATA
+import FirebaseAuth
+#endif
+
 @MainActor
 @Observable
 final class AppEnvironment {
@@ -15,6 +19,9 @@ final class AppEnvironment {
     private(set) var needsNotificationPrompt = false
     private(set) var updateURL: URL?
     private(set) var didCheckVersion = false
+    #if !MOCK_DATA
+    private var authListener: AuthStateDidChangeListenerHandle?
+    #endif
 
     init(
         flights: any FlightRepository,
@@ -35,6 +42,10 @@ final class AppEnvironment {
 
     func signIn(_ provider: LoginProvider) async throws {
         try await account.signIn(provider)
+    }
+
+    func signInWithApple(idToken: String, rawNonce: String, fullName: PersonNameComponents?) async throws {
+        try await account.signInWithApple(idToken: idToken, rawNonce: rawNonce, fullName: fullName)
     }
 
     func signOut() async throws {
@@ -74,6 +85,26 @@ final class AppEnvironment {
         isSignedIn = signedIn
     }
 
+    #if !MOCK_DATA
+    static func live() -> AppEnvironment {
+        let environment = AppEnvironment(
+            flights: LiveFlightRepository(),
+            account: LiveAccountRepository(),
+            notices: LiveNoticeRepository()
+        )
+        environment.observeAuthState()
+        return environment
+    }
+
+    private func observeAuthState() {
+        authListener = Auth.auth().addStateDidChangeListener { [weak self] _, _ in
+            Task { @MainActor in
+                self?.noteSessionChange()
+            }
+        }
+    }
+    #endif
+
     #if MOCK_DATA
     static func mock() -> AppEnvironment {
         let arguments = ProcessInfo.processInfo.arguments
@@ -99,6 +130,11 @@ private final class AccountForwarder: AccountRepository {
 
     func signIn(_ provider: LoginProvider) async throws {
         try await base.signIn(provider)
+        onSessionChange()
+    }
+
+    func signInWithApple(idToken: String, rawNonce: String, fullName: PersonNameComponents?) async throws {
+        try await base.signInWithApple(idToken: idToken, rawNonce: rawNonce, fullName: fullName)
         onSessionChange()
     }
 

@@ -1,0 +1,8 @@
+// 로컬 파일이 이 값을 덮어쓴다. 파일이 없으면 placeholder가 남는다.
+GOOGLE_REVERSED_CLIENT_ID = com.dflight.placeholder
+#include? "Signing.local.xcconfig"
+
+// 시뮬레이터는 팀 없이도 빌드한다. 실기기는 Signing.local.xcconfig의 DEVELOPMENT_TEAM을 쓴다.
+CODE_SIGN_IDENTITY[sdk=iphonesimulator*] = -
+CODE_SIGNING_REQUIRED[sdk=iphonesimulator*] = NO
+CODE_SIGNING_ALLOWED[sdk=iphonesimulator*] = NO

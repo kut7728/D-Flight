@@ -38,6 +38,7 @@
 | TD-15 | 한국공항공사 게이트는 `flight-status/info`로 받는다. D-3~D+6 시각·결항은 `/arrival`·`/depart`. 터미널은 필드가 없어 사용자 제보. `/detail`은 갱신에 쓰지 않는다 |
 | TD-16 | 정보 항목에 `previousValue`를 둔다. 공항 데이터로 바뀐 값의 `변경` 칩(24시간)에 쓴다 (M2, 2026-10-12) |
 | TD-17 | 알림 설정 구조 변경: `users.notificationsEnabled`(전역) + `trackedFlights.notify`(항공편별 4종, 기본 켜짐). 시점은 고정이라 저장하지 않는다. 새 함수 `updateFlightNotify` (M2 검토, 2026-10-12) |
+| TD-18 | 인천 일정 API는 현재 시즌만 준다(M4 확인). 시즌 밖·D-3 전 항공편은 `outside_schedule_season` → 대기 등록(`createManualFlight` + `awaitAutoData`, `origin = pending`). 서버가 일정·운항 현황으로 찾으면 공항 데이터로 바꾼다 (M4, 2026-10-15) |
 
 ## 기본값으로 정한 항목 (확정, 운영하며 조정 가능)
 

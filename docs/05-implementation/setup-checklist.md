@@ -22,9 +22,9 @@
 | Firestore 생성: **지역 `asia-northeast3` (서울)** — 변경 불가 | ✅ 2026-10-12 |
 | Blaze 요금제 전환 (Functions·Secret Manager에 필요) | ✅ 2026-10-12 |
 | 예산 알림 설정 (예: 월 500엔, 1,000엔에서 메일) | ✅ 2026-10-12 |
-| Authentication: Apple, Google 로그인 사용 설정 | ☐ (M3) |
-| App Check: App Attest 등록 | ☐ (M3) |
-| `GoogleService-Info.plist` 내려받기 → 로컬에만 둠 (`.gitignore` 대상) | ☐ (M3) |
+| Authentication: Apple, Google 로그인 사용 설정 | ✅ 2026-10-12 (Apple은 토큰 해지용 키 포함) |
+| App Check: App Attest 등록 | ✅ 2026-10-12 |
+| `GoogleService-Info.plist` 내려받기 → 로컬에만 둠 (`.gitignore` 대상) | ✅ 2026-10-12 (`DFlight/Config/`) |
 
 **운영 프로젝트**는 M9에서 따로 만든다. 개발 중에는 개발 프로젝트와 로컬 에뮬레이터를 쓴다. (기본값: 프로젝트 2개. 예약 작업이 무료 3개를 넘으면 월 약 15엔 추가)
 
