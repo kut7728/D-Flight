@@ -1,7 +1,7 @@
 import SwiftUI
 
 enum ExternalLink {
-    static let privacy = URL(string: "https://dflight.example/privacy")!
+    static let privacy = URL(string: "https://kut7728.github.io/D-Flight/ko/privacy.html")!
     static let terms = URL(string: "https://dflight.example/terms")!
 
     /// Mock에서는 URL을 열지 않고 경고로 보여 준다.

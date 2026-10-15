@@ -263,7 +263,7 @@ struct SettingsView: View {
 
 /// 개인정보 처리방침·이용약관·문의 주소는 M9에서 확정한다.
 private enum SettingsDocument {
-    static let privacy = URL(string: "https://example.com/dflight/privacy")!
+    static let privacy = URL(string: "https://kut7728.github.io/D-Flight/ko/privacy.html")!
     static let terms = URL(string: "https://example.com/dflight/terms")!
-    static let contact = URL(string: "mailto:support@example.com")!
+    static let contact = URL(string: "mailto:kut.support@gmail.com")!
 }
